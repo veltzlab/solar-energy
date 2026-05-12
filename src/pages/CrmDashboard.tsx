@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useCrmStore } from '../store/useCrmStore';
 import type { Lead, LeadStatus } from '../store/useCrmStore';
 import { useAuthStore } from '../store/useAuthStore';
@@ -142,8 +142,8 @@ type FilterInteresse = Lead['interesse'] | 'todos';
 type FilterPeriodo = 'todos' | 'hoje' | 'semana' | 'mes';
 
 export function CrmDashboard() {
-  const { leads, updateLeadStatus, removeLead } = useCrmStore();
-  const { user, logout, users, addUser, removeUser, theme, toggleTheme } = useAuthStore();
+  const { leads, updateLeadStatus, removeLead, fetchLeads } = useCrmStore();
+  const { user, logout, users, addUser, removeUser, theme, toggleTheme, fetchUsers } = useAuthStore();
   const [selectedLeadId, setSelectedLeadId] = useState<string | null>(null);
   const [isNewLeadModalOpen, setIsNewLeadModalOpen] = useState(false);
   const [creationStatus, setCreationStatus] = useState<LeadStatus | undefined>(undefined);
@@ -157,6 +157,9 @@ export function CrmDashboard() {
   const [filtroValorMax, setFiltroValorMax] = useState('');
   const [filtroPeriodo, setFiltroPeriodo] = useState<FilterPeriodo>('todos');
   const [showFilters, setShowFilters] = useState(false);
+
+  useEffect(() => { fetchLeads(); }, []);
+  useEffect(() => { if (user?.role === 'admin') fetchUsers(); }, [user]);
 
   // Estados para novo usuário
   const [newUserName, setNewUserName] = useState('');
@@ -208,19 +211,18 @@ export function CrmDashboard() {
     updateLeadStatus(result.draggableId, newStatus);
   };
 
-  const handleAddUser = (e: React.FormEvent) => {
+  const handleAddUser = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newUserName || !newUserEmail || !newUserPassword) return;
-    addUser({
-      name: newUserName,
-      email: newUserEmail,
-      password: newUserPassword,
-      role: newUserRole
-    });
+    const success = await addUser({ name: newUserName, email: newUserEmail, password: newUserPassword, role: newUserRole });
     setNewUserName('');
     setNewUserEmail('');
     setNewUserPassword('');
-    alert('Usuário adicionado com sucesso!');
+    if (success) {
+      alert('Usuário criado! Um email de confirmação foi enviado para ele ativar o acesso.');
+    } else {
+      alert('Erro ao criar usuário. O email já pode estar cadastrado.');
+    }
   };
 
   const totalLeads = leads.length;
@@ -683,7 +685,7 @@ export function CrmDashboard() {
                           </span>
                         </div>
                       </div>
-                      {u.email !== 'admin@solarenergy.com' && (
+                      {u.email !== user?.email && (
                         <button 
                           onClick={() => removeUser(u.email)}
                           className="p-2 text-zinc-600 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all"

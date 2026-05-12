@@ -1,11 +1,18 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { supabase, supabaseIsolated } from '../lib/supabase';
 
 export type UserRole = 'admin' | 'vendedor';
 
 export interface User {
   email: string;
-  password?: string;
+  name: string;
+  role: UserRole;
+}
+
+export interface ProfileUser {
+  id: string;
+  email: string;
   name: string;
   role: UserRole;
 }
@@ -13,69 +20,93 @@ export interface User {
 interface AuthStore {
   isAuthenticated: boolean;
   user: User | null;
-  users: User[];
+  users: ProfileUser[];
   theme: 'dark' | 'light';
   toggleTheme: () => void;
-  login: (email: string, password: string) => boolean;
-  logout: () => void;
-  addUser: (newUser: User) => void;
-  removeUser: (email: string) => void;
+  init: () => Promise<void>;
+  login: (email: string, password: string) => Promise<boolean>;
+  logout: () => Promise<void>;
+  fetchUsers: () => Promise<void>;
+  addUser: (data: { name: string; email: string; password: string; role: UserRole }) => Promise<boolean>;
+  removeUser: (email: string) => Promise<void>;
 }
-
-const INITIAL_USERS: User[] = [
-  { email: 'admin@solarenergy.com', password: 'solar@2025', name: 'Administrador', role: 'admin' },
-  { email: 'vendas@solarenergy.com', password: 'vendas@2025', name: 'Equipe de Vendas', role: 'vendedor' },
-];
 
 export const useAuthStore = create<AuthStore>()(
   persist(
     (set, get) => ({
       isAuthenticated: false,
       user: null,
-      users: INITIAL_USERS,
+      users: [],
       theme: 'dark',
 
-      toggleTheme: () => set((state) => ({ theme: state.theme === 'dark' ? 'light' : 'dark' })),
+      toggleTheme: () => set((s) => ({ theme: s.theme === 'dark' ? 'light' : 'dark' })),
 
-      login: (email, password) => {
-        const user = get().users.find(
-          (u) => u.email.toLowerCase() === email.toLowerCase() && u.password === password
-        );
-        if (user) {
-          set({ isAuthenticated: true, user: { ...user, password: '' } });
-          return true;
+      init: async () => {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session?.user) return;
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('name, role')
+          .eq('id', session.user.id)
+          .single();
+        if (!profile) return;
+        set({
+          isAuthenticated: true,
+          user: { email: session.user.email!, name: profile.name, role: profile.role as UserRole },
+        });
+      },
+
+      login: async (email, password) => {
+        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+        if (error || !data.user) return false;
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('name, role')
+          .eq('id', data.user.id)
+          .single();
+        if (!profile) {
+          await supabase.auth.signOut();
+          return false;
         }
-        return false;
+        set({
+          isAuthenticated: true,
+          user: { email: data.user.email!, name: profile.name, role: profile.role as UserRole },
+        });
+        return true;
       },
 
-      logout: () => set({ isAuthenticated: false, user: null }),
-
-      addUser: (newUser) => {
-        const exists = get().users.find(u => u.email.toLowerCase() === newUser.email.toLowerCase());
-        if (exists) return;
-        set({ users: [...get().users, newUser] });
+      logout: async () => {
+        await supabase.auth.signOut();
+        set({ isAuthenticated: false, user: null });
       },
 
-      removeUser: (email) => {
-        if (email === 'admin@solarenergy.com') return; // Protege o admin principal
-        set({ users: get().users.filter(u => u.email !== email) });
-      }
+      fetchUsers: async () => {
+        const { data } = await supabase
+          .from('profiles')
+          .select('id, name, email, role')
+          .order('name');
+        if (data) set({ users: data as ProfileUser[] });
+      },
+
+      addUser: async ({ name, email, password, role }) => {
+        const { data, error } = await supabaseIsolated.auth.signUp({ email, password });
+        if (error || !data.user) return false;
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .insert({ id: data.user.id, name, email, role });
+        if (profileError) return false;
+        await get().fetchUsers();
+        return true;
+      },
+
+      removeUser: async (email) => {
+        await supabase.from('profiles').delete().eq('email', email);
+        set((s) => ({ users: s.users.filter((u) => u.email !== email) }));
+      },
     }),
     {
-      name: 'solar-crm-auth',
-      version: 1,
-      migrate: (persistedState: any, version: number) => {
-        if (version === 0) {
-          // Migração do estado antigo para o novo
-          return {
-            ...persistedState,
-            users: INITIAL_USERS,
-            user: null,
-            isAuthenticated: false // Força logout para garantir que o novo objeto 'user' seja criado
-          };
-        }
-        return persistedState;
-      },
+      name: 'solar-crm-theme',
+      partialize: (s) => ({ theme: s.theme }),
     }
   )
 );

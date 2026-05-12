@@ -69,6 +69,9 @@ function LandingPage() {
 }
 
 function App() {
+  const init = useAuthStore((s) => s.init);
+  useEffect(() => { init(); }, []);
+
   return (
     <BrowserRouter>
       <Routes>

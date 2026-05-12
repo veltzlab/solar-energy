@@ -16,10 +16,7 @@ export function CrmLogin() {
     setError('');
     setLoading(true);
 
-    // Pequeno delay para dar sensação de processamento
-    await new Promise((r) => setTimeout(r, 600));
-
-    const success = login(email.trim(), password);
+    const success = await login(email.trim(), password);
     if (!success) {
       setError('E-mail ou senha incorretos. Verifique suas credenciais.');
     }
