@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { CurrencyDollar, Lightning, ShieldCheck, Tree } from '@phosphor-icons/react';
+import { CurrencyDollar, Lightning, ShieldCheck, Tree, Lock } from '@phosphor-icons/react';
 import { openCalculator } from '../lib/openCalculator';
 import { calcularSistema } from '../utils/solarCalculations';
 
@@ -69,54 +69,70 @@ export function Calculator() {
           </motion.div>
 
           {/* Results Bento Grid */}
-          <div className="xl:col-span-7 grid grid-cols-1 md:grid-cols-2 gap-6">
-            
-            <motion.div 
-              layout
-              className="bg-zinc-950 p-8 md:p-10 rounded-[2.5rem] flex flex-col justify-between group overflow-hidden relative shadow-[0_20px_40px_-15px_rgba(0,0,0,0.2)]"
+          <div className="xl:col-span-7 relative">
+            <div
+              aria-hidden="true"
+              className="grid grid-cols-1 md:grid-cols-2 gap-6 blur-md select-none pointer-events-none"
             >
-              <div className="absolute inset-0 bg-gradient-to-br from-[var(--color-accent-dark)]/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
-              <div className="relative z-10">
-                <CurrencyDollar size={32} className="text-[var(--color-accent)] mb-8" weight="duotone" />
-                <p className="text-zinc-400 text-sm font-semibold uppercase tracking-widest mb-3">Economia em 1 Ano</p>
-                <div className="text-5xl md:text-6xl font-bold text-white tracking-tighter font-mono">
-                  R$ {savingsYear.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+              <motion.div
+                layout
+                className="bg-zinc-950 p-8 md:p-10 rounded-[2.5rem] flex flex-col justify-between overflow-hidden relative shadow-[0_20px_40px_-15px_rgba(0,0,0,0.2)]"
+              >
+                <div className="relative z-10">
+                  <CurrencyDollar size={32} className="text-[var(--color-accent)] mb-8" weight="duotone" />
+                  <p className="text-zinc-400 text-sm font-semibold uppercase tracking-widest mb-3">Economia em 1 Ano</p>
+                  <div className="text-5xl md:text-6xl font-bold text-white tracking-tighter font-mono">
+                    R$ {savingsYear.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                  </div>
                 </div>
-              </div>
-            </motion.div>
+              </motion.div>
 
-            <motion.div 
-              layout
-              className="bg-white p-8 md:p-10 rounded-[2.5rem] border border-zinc-200/50 shadow-[0_20px_40px_-15px_rgba(0,0,0,0.03)] flex flex-col justify-between group hover:border-zinc-300 transition-colors"
-            >
-              <Lightning size={32} className="text-[var(--color-accent-dark)] mb-8" weight="duotone" />
-              <div>
-                <p className="text-zinc-500 text-sm font-semibold uppercase tracking-widest mb-3">Economia em 20 Anos</p>
-                <div className="text-5xl md:text-6xl font-bold text-zinc-950 tracking-tighter font-mono group-hover:text-[var(--color-accent-dark)] transition-colors duration-500">
-                  R$ {savings20Years.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+              <motion.div
+                layout
+                className="bg-white p-8 md:p-10 rounded-[2.5rem] border border-zinc-200/50 shadow-[0_20px_40px_-15px_rgba(0,0,0,0.03)] flex flex-col justify-between"
+              >
+                <Lightning size={32} className="text-[var(--color-accent-dark)] mb-8" weight="duotone" />
+                <div>
+                  <p className="text-zinc-500 text-sm font-semibold uppercase tracking-widest mb-3">Economia em 20 Anos</p>
+                  <div className="text-5xl md:text-6xl font-bold text-zinc-950 tracking-tighter font-mono">
+                    R$ {savings20Years.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                  </div>
                 </div>
-              </div>
-            </motion.div>
+              </motion.div>
 
-            <motion.div 
-              layout
-              className="md:col-span-2 bg-[var(--color-accent)] p-8 md:p-12 rounded-[2.5rem] shadow-[0_20px_40px_-15px_rgba(234,179,8,0.25)] flex flex-col md:flex-row items-start md:items-center justify-between gap-10"
-            >
-              <div>
-                <Tree size={40} className="text-zinc-900 mb-6" weight="fill" />
-                <p className="text-zinc-900/70 text-sm font-bold uppercase tracking-widest mb-3">Impacto Ambiental</p>
-                <div className="text-6xl md:text-7xl font-bold text-zinc-950 tracking-tighter font-mono">
-                  {treesSaved} Árvores
+              <motion.div
+                layout
+                className="md:col-span-2 bg-[var(--color-accent)] p-8 md:p-12 rounded-[2.5rem] shadow-[0_20px_40px_-15px_rgba(234,179,8,0.25)] flex flex-col md:flex-row items-start md:items-center justify-between gap-10"
+              >
+                <div>
+                  <Tree size={40} className="text-zinc-900 mb-6" weight="fill" />
+                  <p className="text-zinc-900/70 text-sm font-bold uppercase tracking-widest mb-3">Impacto Ambiental</p>
+                  <div className="text-6xl md:text-7xl font-bold text-zinc-950 tracking-tighter font-mono">
+                    {treesSaved} Árvores
+                  </div>
+                  <p className="text-zinc-900/80 mt-3 font-medium">Equivalente plantado por ano</p>
                 </div>
-                <p className="text-zinc-900/80 mt-3 font-medium">Equivalente plantado por ano</p>
-              </div>
-              <div className="w-full md:w-auto">
-                <button onClick={() => openCalculator(bill)} className="w-full md:w-auto px-10 py-5 bg-zinc-950 text-white rounded-full font-semibold hover:bg-zinc-800 transition-all active:scale-[0.98] shadow-lg flex items-center justify-center gap-2">
-                  Receber Orçamento
+              </motion.div>
+            </div>
+
+            {/* Overlay de bloqueio — libera os valores só após o contato */}
+            <div className="absolute inset-0 flex items-center justify-center p-4">
+              <div className="bg-white/90 backdrop-blur-sm border border-zinc-200/70 rounded-[2.5rem] shadow-xl px-8 py-10 max-w-sm w-full flex flex-col items-center text-center gap-4">
+                <div className="w-14 h-14 rounded-full bg-zinc-950 flex items-center justify-center shadow-lg">
+                  <Lock size={24} weight="fill" className="text-[var(--color-accent)]" />
+                </div>
+                <div>
+                  <p className="font-bold text-zinc-950 text-lg">Sua simulação está pronta!</p>
+                  <p className="text-zinc-500 text-sm mt-1">Informe seu nome e WhatsApp para liberar os valores de economia e impacto ambiental.</p>
+                </div>
+                <button
+                  onClick={() => openCalculator(bill)}
+                  className="w-full px-8 py-4 bg-zinc-950 text-white rounded-full font-semibold hover:bg-zinc-800 transition-all active:scale-[0.98] shadow-lg flex items-center justify-center gap-2"
+                >
+                  Ver minha economia
                 </button>
               </div>
-            </motion.div>
-
+            </div>
           </div>
         </div>
       </div>
