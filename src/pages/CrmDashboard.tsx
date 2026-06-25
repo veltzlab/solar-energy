@@ -11,6 +11,7 @@ import { LeadDetailModal } from '../components/LeadDetailModal';
 import { NewLeadModal } from '../components/NewLeadModal';
 import { ErrorBoundary } from '../components/ErrorBoundary';
 import { NotificationBell } from '../components/NotificationBell';
+import { isNotificationSupported, getNotificationPermission, requestNotificationPermission } from '../lib/browserNotifications';
 
 const BlogManager = lazy(() => import('../components/BlogManager').then((m) => ({ default: m.BlogManager })));
 
@@ -196,6 +197,13 @@ export function CrmDashboard() {
 
   useEffect(() => { fetchLeads(); }, [fetchLeads]);
   useEffect(() => { if (user?.role === 'admin') fetchUsers(); }, [user, fetchUsers]);
+
+  // Pede permissão para notificações do navegador assim que o usuário entra no CRM
+  useEffect(() => {
+    if (isNotificationSupported() && getNotificationPermission() === 'default') {
+      requestNotificationPermission();
+    }
+  }, []);
 
   // Estados para novo usuário
   const [newUserName, setNewUserName] = useState('');
