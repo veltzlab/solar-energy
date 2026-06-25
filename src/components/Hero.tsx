@@ -16,7 +16,7 @@ export function Hero({ onOpenCalculator }: HeroProps) {
           autoPlay
           muted
           playsInline
-          preload="metadata"
+          preload="none"
           className="w-full h-full object-cover object-center"
           aria-hidden="true"
         />
@@ -43,8 +43,8 @@ export function Hero({ onOpenCalculator }: HeroProps) {
             <span className="text-sm font-semibold text-white tracking-tight drop-shadow-sm">Energia limpa e acessível</span>
           </motion.div>
           
-          <h1 className="text-5xl md:text-7xl lg:text-[6.5rem] font-extrabold tracking-tighter text-white leading-[1.05] drop-shadow-xl w-full">
-            Sua conta de luz pode <br/> cair <span className="text-[var(--color-accent)] drop-shadow-md">até 95%</span>
+          <h1 className="text-4xl sm:text-5xl md:text-7xl lg:text-[6.5rem] font-extrabold tracking-tighter text-white leading-[1.05] drop-shadow-xl w-full">
+            Sua conta de luz pode <br className="hidden sm:block"/> cair <span className="text-[var(--color-accent)] drop-shadow-md">até 95%</span>
           </h1>
           
           <p className="text-xl md:text-2xl text-zinc-100 max-w-[60ch] leading-relaxed font-normal mx-auto drop-shadow-md">

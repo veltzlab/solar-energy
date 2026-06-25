@@ -38,14 +38,13 @@ export function HowItWorks() {
   ];
 
   useGSAP(() => {
+    if (window.innerWidth < 768) return;
     const container = scrollRef.current;
     
     if (!container) return;
 
-    // Cálculo exato de quanto a barra precisa rolar para a esquerda
     const getScrollAmount = () => {
-      let totalWidth = container.scrollWidth;
-      // Adicionamos +250px (ou um cálculo extra) para garantir que a esteira seja puxada até o limite absoluto
+      const totalWidth = container.scrollWidth;
       return -(totalWidth - window.innerWidth + 250);
     };
 
@@ -62,7 +61,6 @@ export function HowItWorks() {
       animation: tween,
       scrub: 1,
       invalidateOnRefresh: true,
-      // Markers apenas para debug local se precisar: markers: true
     });
 
   }, { scope: containerRef });
@@ -70,9 +68,9 @@ export function HowItWorks() {
   return (
     <section 
       ref={containerRef} 
-      className="h-[100dvh] bg-zinc-50 border-t border-zinc-100 overflow-hidden flex flex-col justify-center relative"
+      className="md:h-[100dvh] bg-zinc-50 border-t border-zinc-100 overflow-hidden flex flex-col justify-center relative"
     >
-      <div className="absolute top-16 md:top-24 left-0 w-full px-6 md:px-12 z-20 pointer-events-none">
+      <div className="pt-16 md:pt-24 left-0 w-full px-6 md:px-12 z-20 pointer-events-none">
         <div className="max-w-7xl mx-auto">
           <h2 className="text-3xl md:text-5xl font-black tracking-tight text-zinc-950 mb-4">
             Como Funciona
@@ -83,10 +81,10 @@ export function HowItWorks() {
         </div>
       </div>
 
-      {/* Esteira Horizontal */}
+      {/* Mobile: vertical stack / Desktop: horizontal scroll */}
       <div 
         ref={scrollRef} 
-        className="flex gap-6 md:gap-10 w-[fit-content] items-center pt-24 mt-10 md:mt-0 pl-[max(1.5rem,calc((100vw-80rem)/2))] pr-[max(1.5rem,calc((100vw-80rem)/2))] md:pl-[max(3rem,calc((100vw-80rem)/2))] md:pr-[max(3rem,calc((100vw-80rem)/2))]"
+        className="flex flex-col md:flex-row gap-6 md:gap-10 w-full md:w-[fit-content] items-center pt-8 md:pt-24 pb-8 md:pb-0 px-6 md:px-12 md:pl-[max(3rem,calc((100vw-80rem)/2))] md:pr-[max(3rem,calc((100vw-80rem)/2))] overflow-y-auto md:overflow-visible"
       >
         {steps.map((step, index) => {
           const isLast = index === steps.length - 1;
@@ -94,7 +92,7 @@ export function HowItWorks() {
           return (
             <div 
               key={index} 
-              className={`w-[300px] md:w-[340px] h-[380px] shrink-0 flex flex-col items-start text-left rounded-[2.5rem] p-10 relative overflow-hidden group transition-all duration-500 hover:-translate-y-3 ${
+              className={`w-full md:w-[340px] md:h-[380px] shrink-0 flex flex-col items-start text-left rounded-[2.5rem] p-10 relative overflow-hidden group transition-all duration-500 hover:-translate-y-3 ${
                 isLast 
                   ? "bg-[var(--color-accent)] shadow-[0_20px_60px_rgba(232,178,8,0.3)]" 
                   : "bg-white shadow-[0_20px_40px_rgba(0,0,0,0.04)] hover:shadow-[0_20px_60px_rgba(0,0,0,0.08)] border border-white"

@@ -15,7 +15,7 @@ export function SearchPalette({ isOpen, onClose }: SearchPaletteProps) {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
         e.preventDefault();
-        isOpen ? onClose() : document.dispatchEvent(new CustomEvent('open-search'));
+        if (isOpen) { onClose(); } else { document.dispatchEvent(new CustomEvent('open-search')); }
       }
       if (e.key === 'Escape' && isOpen) {
         onClose();

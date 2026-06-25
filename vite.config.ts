@@ -5,6 +5,10 @@ import tailwindcss from '@tailwindcss/vite'
 export default defineConfig({
   plugins: [react(), tailwindcss()],
   server: {
+    watch: {
+      // Ignora a pasta do servidor backend para não recarregar ao salvar sessão/conversas
+      ignored: ['**/server/**', '**/crm-standalone/**'],
+    },
     proxy: {
       '/api': {
         target: 'http://localhost:3001',

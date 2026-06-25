@@ -1,37 +1,60 @@
 @import "tailwindcss";
 
 @theme {
-  --color-accent: #e8b208; /* Custom Yellow */
-  --color-accent-light: #fef08a; /* Yellow 200 */
-  --color-accent-dark: #ca8a04; /* Yellow 600 */
-  --color-background: #ffffff;
-  --color-foreground: #09090b;
+  --color-accent: #e8b208;
+  --color-accent-light: #fef08a;
+  --color-accent-dark: #ca8a04;
+  --color-bg-primary: #ffffff;
+  --color-bg-secondary: #fafafa;
+  --color-bg-tertiary: #f4f4f5;
+  --color-text-primary: #09090b;
+  --color-text-secondary: #52525b;
+  --color-text-tertiary: #a1a1aa;
+  --color-border-primary: #e4e4e7;
+  --color-border-secondary: #f4f4f5;
+  --color-surface: #ffffff;
+  --color-surface-hover: #f4f4f5;
   --color-zinc-950: #09090b;
 }
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 240 10% 3.9%;
-    --card: 0 0% 100%;
-    --card-foreground: 240 10% 3.9%;
-    --border: 240 5.9% 90%;
-    --accent: 45 93% 47%;
-    --accent-foreground: 240 5.9% 10%;
+    --color-bg-primary: #ffffff;
+    --color-bg-secondary: #fafafa;
+    --color-bg-tertiary: #f4f4f5;
+    --color-text-primary: #09090b;
+    --color-text-secondary: #52525b;
+    --color-text-tertiary: #a1a1aa;
+    --color-border-primary: #e4e4e7;
+    --color-border-secondary: #f4f4f5;
+    --color-surface: #ffffff;
+    --color-surface-hover: #f4f4f5;
+  }
+
+  .dark {
+    --color-bg-primary: #09090b;
+    --color-bg-secondary: #18181b;
+    --color-bg-tertiary: #27272a;
+    --color-text-primary: #fafafa;
+    --color-text-secondary: #a1a1aa;
+    --color-text-tertiary: #52525b;
+    --color-border-primary: #27272a;
+    --color-border-secondary: #18181b;
+    --color-surface: #18181b;
+    --color-surface-hover: #27272a;
   }
 
   body {
-    background-color: var(--color-background);
-    color: var(--color-foreground);
+    background-color: var(--color-bg-primary);
+    color: var(--color-text-primary);
     font-family: "Outfit", system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
 }
 
-/* Taste Skill Liquid Glass */
 @layer utilities {
-  .liquid-glass {
+  .glass {
     background: rgba(255, 255, 255, 0.4);
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
@@ -39,7 +62,7 @@
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5), 0 20px 40px -15px rgba(0, 0, 0, 0.05);
   }
 
-  .liquid-glass-dark {
+  .dark .glass {
     background: rgba(9, 9, 11, 0.6);
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);

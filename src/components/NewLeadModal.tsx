@@ -24,6 +24,7 @@ export function NewLeadModal({ isOpen, onClose, initialStatus }: NewLeadModalPro
   // Reset ao fechar
   useEffect(() => {
     if (!isOpen) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setNome('');
       setWhatsapp('');
       setValorConta('');
@@ -44,25 +45,26 @@ export function NewLeadModal({ isOpen, onClose, initialStatus }: NewLeadModalPro
     if (!nome || !whatsapp || !valorConta) return;
 
     setLoading(true);
-    
-    // Pequeno delay para feedback visual
-    await new Promise(r => setTimeout(r, 500));
 
     const valor = parseFloat(valorConta.replace(/\D/g, '')) / 100 || 0;
     const calc = calcularSistema(valor || 500);
 
-    addLead({
-      nome: nome.trim(),
-      whatsapp: whatsapp.replace(/\D/g, ''),
-      valorConta: valor || 500,
-      tipoImovel,
-      economiaProjetada: calc.economiaProjetada,
-      sistemaIndicado: calc.sistemaKwp,
-      payback: calc.payback,
-    }, initialStatus);
-
-    setLoading(false);
-    onClose();
+    try {
+      await addLead({
+        nome: nome.trim(),
+        whatsapp: whatsapp.replace(/\D/g, ''),
+        valorConta: valor || 500,
+        tipoImovel,
+        economiaProjetada: calc.economiaProjetada,
+        sistemaIndicado: calc.sistemaKwp,
+        payback: calc.payback,
+      }, initialStatus);
+      setLoading(false);
+      onClose();
+    } catch {
+      setLoading(false);
+      alert('Erro ao salvar cliente. Verifique sua conexão e tente novamente.');
+    }
   };
 
   const formatCurrencyInput = (val: string) => {

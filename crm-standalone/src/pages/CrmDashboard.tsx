@@ -5,10 +5,9 @@ import { useAuthStore } from '../store/useAuthStore';
 import type { UserRole } from '../store/useAuthStore';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import type { DropResult } from '@hello-pangea/dnd';
-import { WhatsappLogo, User, CurrencyDollar, Fire, Drop, Snowflake, SunDim, MagnifyingGlass, X, Funnel, Users, Plus, Trash, ShieldCheck, SignOut, House, Moon, Sun, AddressBook } from '@phosphor-icons/react';
+import { WhatsappLogo, User, CurrencyDollar, Fire, Drop, Snowflake, SunDim, MagnifyingGlass, X, Funnel, Users, Plus, Trash, ShieldCheck, SignOut, House, Moon, Sun, AddressBook, Headset } from '@phosphor-icons/react';
 import { LeadDetailModal } from '../components/LeadDetailModal';
 import { NewLeadModal } from '../components/NewLeadModal';
-import { WhatsappPanel } from '../components/WhatsappPanel';
 
 const COLUMNS: { id: LeadStatus; label: string; color: string }[] = [
   { id: 'novo',        label: 'Novos Leads',    color: 'bg-blue-500' },
@@ -37,13 +36,21 @@ const interestIcon = {
 
 function LeadCard({ lead, index, onOpenDetail }: { lead: Lead; index: number; onOpenDetail: (lead: Lead) => void }) {
   const removeLead = useCrmStore((s) => s.removeLead);
+  const claimLead = useCrmStore((s) => s.claimLead);
   const theme = useAuthStore((s) => s.theme);
+  const user = useAuthStore((s) => s.user);
 
   const handleDelete = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (window.confirm(`Tem certeza que deseja excluir o contato de ${lead.nome}?`)) {
       removeLead(lead.id);
     }
+  };
+
+  const handleClaim = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!user) return;
+    claimLead(lead.id, { email: user.email, name: user.name });
   };
 
   return (
@@ -117,6 +124,24 @@ function LeadCard({ lead, index, onOpenDetail }: { lead: Lead; index: number; on
             </div>
           )}
 
+          {/* Atendimento */}
+          <div className="mt-3 flex items-center justify-between gap-2">
+            <div className="flex items-center gap-1.5 min-w-0">
+              <Headset size={13} weight="fill" className={lead.assignedToName ? 'text-[var(--color-accent)]' : 'text-zinc-500'} />
+              <span className={`text-[11px] font-semibold truncate ${lead.assignedToName ? (theme === 'dark' ? 'text-zinc-200' : 'text-zinc-700') : 'text-zinc-500'}`}>
+                {lead.assignedToName ?? 'Sem atendente'}
+              </span>
+            </div>
+            {!lead.assignedToName && (
+              <button
+                onClick={handleClaim}
+                className="shrink-0 px-2 py-0.5 rounded-md bg-[var(--color-accent)]/15 text-[var(--color-accent)] text-[10px] font-bold hover:bg-[var(--color-accent)] hover:text-zinc-950 transition-all"
+              >
+                Assumir
+              </button>
+            )}
+          </div>
+
           {/* Footer com datas */}
           <div className={`mt-3 pt-3 border-t space-y-1.5 ${theme === 'dark' ? 'border-white/5' : 'border-zinc-50'}`}>
             <div className="flex items-center justify-between">
@@ -147,7 +172,7 @@ export function CrmDashboard() {
   const [selectedLeadId, setSelectedLeadId] = useState<string | null>(null);
   const [isNewLeadModalOpen, setIsNewLeadModalOpen] = useState(false);
   const [creationStatus, setCreationStatus] = useState<LeadStatus | undefined>(undefined);
-  const [activeTab, setActiveTab] = useState<'kanban' | 'users' | 'contacts' | 'whatsapp'>('kanban');
+  const [activeTab, setActiveTab] = useState<'kanban' | 'users' | 'contacts'>('kanban');
 
   // Estados dos filtros
   const [busca, setBusca] = useState('');
@@ -282,19 +307,6 @@ export function CrmDashboard() {
           >
             <AddressBook size={20} weight={activeTab === 'contacts' ? 'fill' : 'regular'} />
             Contatos
-          </button>
-          <button
-            onClick={() => setActiveTab('whatsapp')}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
-              activeTab === 'whatsapp'
-                ? 'bg-[var(--color-accent)] text-zinc-950 font-bold'
-                : theme === 'dark'
-                  ? 'text-zinc-400 hover:bg-white/5 hover:text-white'
-                  : 'text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900'
-            }`}
-          >
-            <WhatsappLogo size={20} weight={activeTab === 'whatsapp' ? 'fill' : 'regular'} />
-            WhatsApp
           </button>
           {user?.role === 'admin' && (
             <button
@@ -583,6 +595,7 @@ export function CrmDashboard() {
                         <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-zinc-500">Status</th>
                         <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-zinc-500">WhatsApp</th>
                         <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-zinc-500">Conta</th>
+                        <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-zinc-500">Atendente</th>
                         <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-widest text-zinc-500 text-right">Ações</th>
                       </tr>
                     </thead>
@@ -620,6 +633,14 @@ export function CrmDashboard() {
                           <td className="px-6 py-4">
                             <p className={`text-sm font-bold ${theme === 'dark' ? 'text-white' : 'text-zinc-900'}`}>{formatCurrency(l.valorConta)}</p>
                           </td>
+                          <td className="px-6 py-4">
+                            <div className="flex items-center gap-1.5">
+                              <Headset size={14} weight="fill" className={l.assignedToName ? 'text-[var(--color-accent)]' : 'text-zinc-500'} />
+                              <span className={`text-xs font-medium ${l.assignedToName ? (theme === 'dark' ? 'text-zinc-200' : 'text-zinc-700') : 'text-zinc-500'}`}>
+                                {l.assignedToName ?? 'Sem atendente'}
+                              </span>
+                            </div>
+                          </td>
                           <td className="px-6 py-4 text-right">
                             <div className="flex items-center justify-end gap-2">
                               <button className="p-2 rounded-lg bg-[var(--color-accent)]/10 text-[var(--color-accent)] hover:bg-[var(--color-accent)] hover:text-zinc-950 transition-all opacity-0 group-hover:opacity-100 font-bold text-xs">
@@ -650,10 +671,6 @@ export function CrmDashboard() {
                   </div>
                 )}
               </div>
-            </div>
-          ) : activeTab === 'whatsapp' ? (
-            <div className="flex-1 flex flex-col overflow-hidden">
-              <WhatsappPanel />
             </div>
           ) : (
             <div className="p-8 max-w-4xl h-full overflow-y-auto">

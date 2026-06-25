@@ -51,9 +51,11 @@ export function NewLeadModal({ isOpen, onClose, initialStatus }: NewLeadModalPro
     const valor = parseFloat(valorConta.replace(/\D/g, '')) / 100 || 0;
     const calc = calcularSistema(valor || 500);
 
+    const phone = whatsapp.replace(/\D/g, '');
+
     addLead({
       nome: nome.trim(),
-      whatsapp: whatsapp.replace(/\D/g, ''),
+      whatsapp: phone,
       valorConta: valor || 500,
       tipoImovel,
       economiaProjetada: calc.economiaProjetada,

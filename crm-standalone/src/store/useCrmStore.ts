@@ -27,6 +27,8 @@ export interface Lead {
   horarioContato?: string;
   notes: LeadNote[];
   consumoConfirmado?: number;
+  assignedToEmail?: string;
+  assignedToName?: string;
 }
 
 interface CrmStore {
@@ -37,6 +39,8 @@ interface CrmStore {
   removeLead: (id: string) => void;
   addNote: (leadId: string, text: string) => void;
   removeNote: (leadId: string, noteId: string) => void;
+  claimLead: (id: string, vendedor: { email: string; name: string }) => void;
+  releaseLead: (id: string) => void;
 }
 
 export const useCrmStore = create<CrmStore>()(
@@ -107,6 +111,22 @@ export const useCrmStore = create<CrmStore>()(
           });
           return { leads: newLeads };
         });
+      },
+
+      claimLead: (id, vendedor) => {
+        set((state) => ({
+          leads: state.leads.map((l) =>
+            l.id === id ? { ...l, assignedToEmail: vendedor.email, assignedToName: vendedor.name } : l
+          ),
+        }));
+      },
+
+      releaseLead: (id) => {
+        set((state) => ({
+          leads: state.leads.map((l) =>
+            l.id === id ? { ...l, assignedToEmail: undefined, assignedToName: undefined } : l
+          ),
+        }));
       },
     }),
     {

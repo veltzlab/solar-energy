@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { X, ArrowLeft, Lightning, CheckCircle, WhatsappLogo, User, CurrencyDollar } from '@phosphor-icons/react';
 import { useCrmStore } from '../store/useCrmStore';
 import { motion, AnimatePresence } from 'framer-motion';
-import { sendWelcomeMessage } from '../lib/api';
 
 interface CalculatorModalProps {
   isOpen: boolean;
@@ -52,26 +51,22 @@ export function CalculatorModal({ isOpen, onClose }: CalculatorModalProps) {
   const resultado = calcularSistema(valorConta);
   const canSubmit = nome.trim().length >= 2 && telefone.replace(/\D/g, '').length >= 10;
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!canSubmit) return;
     const whatsappDigits = telefone.replace(/\D/g, '');
-    addLead({
-      nome: nome.trim(),
-      whatsapp: whatsappDigits,
-      valorConta,
-      tipoImovel: 'Residencial',
-      economiaProjetada: resultado.economiaProjetada,
-      sistemaIndicado: resultado.sistemaKwp,
-      payback: resultado.payback,
-    });
-    // Dispara mensagem automática de boas-vindas via WhatsApp (falha silenciosamente)
-    sendWelcomeMessage({
-      nome: nome.trim(),
-      whatsapp: whatsappDigits,
-      economiaProjetada: resultado.economiaProjetada,
-      sistemaKwp: resultado.sistemaKwp,
-      payback: resultado.payback,
-    });
+    try {
+      await addLead({
+        nome: nome.trim(),
+        whatsapp: whatsappDigits,
+        valorConta,
+        tipoImovel: 'Residencial',
+        economiaProjetada: resultado.economiaProjetada,
+        sistemaIndicado: resultado.sistemaKwp,
+        payback: resultado.payback,
+      });
+    } catch {
+      // Falha ao salvar no banco — não bloqueia o usuário
+    }
     setStep(3);
   };
 
@@ -179,7 +174,7 @@ export function CalculatorModal({ isOpen, onClose }: CalculatorModalProps) {
                       <span>R$ 5.000</span>
                     </div>
 
-                    <div className="mt-6 grid grid-cols-3 gap-3">
+                    <div className="mt-6 grid grid-cols-2 sm:grid-cols-3 gap-3">
                       {[200, 500, 1000, 1500, 2000, 3000].map((v) => (
                         <button
                           key={v}
@@ -335,7 +330,7 @@ export function CalculatorModal({ isOpen, onClose }: CalculatorModalProps) {
 
             {/* Footer de navegação */}
             {step < 3 && (
-              <div className="px-8 pb-8 flex items-center justify-between gap-4">
+              <div className="px-8 pb-8 flex items-center justify-between gap-4 flex-wrap">
                 {step > 1 ? (
                   <button
                     onClick={() => setStep((s) => (s - 1) as Step)}

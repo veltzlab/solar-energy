@@ -14,28 +14,32 @@ const NAV_LINKS = [
 ];
 
 export function Navbar({ onOpenCalculator }: NavbarProps) {
-  const [scrolled, setScrolled] = useState(false);
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const location = useLocation();
-
   const isHome = location.pathname === "/";
+  const [scrolled, setScrolled] = useState(!isHome);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+
   const shouldStyleDark = !isHome || scrolled;
 
   useEffect(() => {
-    if (!isHome) {
-      setScrolled(true);
-      return;
-    }
+    if (!isHome) return;
+    let ticking = false;
     const handleScroll = () => {
-      setScrolled(window.scrollY > window.innerHeight - 80);
+      if (!ticking) {
+        requestAnimationFrame(() => {
+          setScrolled(window.scrollY > window.innerHeight - 80);
+          ticking = false;
+        });
+        ticking = true;
+      }
     };
-    window.addEventListener("scroll", handleScroll);
+    window.addEventListener("scroll", handleScroll, { passive: true });
     handleScroll();
     return () => window.removeEventListener("scroll", handleScroll);
   }, [isHome]);
 
-  // Fecha menu ao mudar de rota
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setIsMenuOpen(false);
   }, [location.pathname]);
 

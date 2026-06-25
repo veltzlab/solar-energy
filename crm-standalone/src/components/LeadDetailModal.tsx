@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { X, WhatsappLogo, User, CurrencyDollar, Fire, Drop, Snowflake, Clock, Note, ArrowRight, Trash } from '@phosphor-icons/react';
+import { X, WhatsappLogo, User, CurrencyDollar, Fire, Drop, Snowflake, Clock, Note, ArrowRight, Trash, Headset, SignOut } from '@phosphor-icons/react';
 import type { Lead, LeadStatus } from '../store/useCrmStore';
 import { useCrmStore } from '../store/useCrmStore';
 import { useAuthStore } from '../store/useAuthStore';
@@ -40,9 +40,9 @@ function buildWhatsAppMessage(lead: Lead) {
 }
 
 export function LeadDetailModal({ leadId, onClose }: LeadDetailModalProps) {
-  const { leads, updateLead, updateLeadStatus, removeLead, addNote, removeNote } = useCrmStore();
+  const { leads, updateLead, updateLeadStatus, removeLead, addNote, removeNote, claimLead, releaseLead } = useCrmStore();
   const lead = leads.find(l => l.id === leadId) || null;
-  const { theme } = useAuthStore();
+  const { theme, user } = useAuthStore();
 
   const [interesse, setInteresse] = useState<Lead['interesse']>(undefined);
   const [tipoTelhado, setTipoTelhado] = useState('');
@@ -102,6 +102,18 @@ export function LeadDetailModal({ leadId, onClose }: LeadDetailModalProps) {
     if (!newNote.trim() || !leadId) return;
     addNote(leadId, newNote);
     setNewNote('');
+  };
+
+  const isMine = !!user && lead.assignedToEmail === user.email;
+  const canRelease = isMine || user?.role === 'admin';
+
+  const handleClaim = () => {
+    if (!user) return;
+    claimLead(lead.id, { email: user.email, name: user.name });
+  };
+
+  const handleRelease = () => {
+    releaseLead(lead.id);
   };
 
   const formatDate = (dateStr: string) => {
@@ -182,19 +194,51 @@ export function LeadDetailModal({ leadId, onClose }: LeadDetailModalProps) {
                 </div>
               </div>
 
-              {/* Botão de WhatsApp com mensagem personalizada */}
-              <a
-                href={buildWhatsAppMessage(lead)}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="mt-4 flex items-center justify-center gap-2.5 w-full py-3 rounded-xl bg-green-500 hover:bg-green-600 text-white font-bold transition-colors"
-              >
-                <WhatsappLogo size={20} weight="fill" />
-                {lead.status === 'novo'
-                  ? 'Iniciar conversa com mensagem personalizada'
-                  : `Abrir WhatsApp — ${lead.whatsapp.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3')}`
-                }
-              </a>
+              {/* Atendimento — quem está com o lead */}
+              <div className="mt-4 flex items-center justify-between gap-3 bg-white/5 rounded-xl px-4 py-3">
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <Headset size={18} weight="fill" className={lead.assignedToName ? 'text-[var(--color-accent)]' : 'text-zinc-500'} />
+                  {lead.assignedToName ? (
+                    <p className="text-sm text-white font-semibold truncate">
+                      Atendendo: <span className="font-black">{isMine ? 'Você' : lead.assignedToName}</span>
+                    </p>
+                  ) : (
+                    <p className="text-sm text-zinc-400 font-medium">Sem vendedor atribuído</p>
+                  )}
+                </div>
+                {!lead.assignedToName ? (
+                  <button
+                    onClick={handleClaim}
+                    className="shrink-0 px-3.5 py-1.5 rounded-lg bg-[var(--color-accent)] text-zinc-950 text-xs font-bold hover:brightness-105 transition-all"
+                  >
+                    Assumir
+                  </button>
+                ) : canRelease ? (
+                  <button
+                    onClick={handleRelease}
+                    title="Liberar atendimento"
+                    className="shrink-0 p-2 rounded-lg text-zinc-400 hover:text-red-400 hover:bg-red-500/10 transition-colors"
+                  >
+                    <SignOut size={16} />
+                  </button>
+                ) : null}
+              </div>
+
+              {/* Botão de WhatsApp */}
+              <div className="mt-4">
+                <a
+                  href={buildWhatsAppMessage(lead)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-center gap-2.5 w-full py-3 rounded-xl bg-green-500 hover:bg-green-600 text-white font-bold transition-colors"
+                >
+                  <WhatsappLogo size={20} weight="fill" />
+                  {lead.status === 'novo'
+                    ? 'Iniciar conversa'
+                    : `Abrir WhatsApp — ${lead.whatsapp.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3')}`
+                  }
+                </a>
+              </div>
             </div>
 
             {/* Corpo com scroll */}

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { CurrencyDollar, Lightning, ShieldCheck, Tree } from '@phosphor-icons/react';
+import { openCalculator } from '../lib/openCalculator';
 
 export function Calculator() {
   const [bill, setBill] = useState<number>(300);
@@ -108,7 +109,7 @@ export function Calculator() {
                 <p className="text-zinc-900/80 mt-3 font-medium">Equivalente plantado por ano</p>
               </div>
               <div className="w-full md:w-auto">
-                <button className="w-full md:w-auto px-10 py-5 bg-zinc-950 text-white rounded-full font-semibold hover:bg-zinc-800 transition-all active:scale-[0.98] shadow-lg flex items-center justify-center gap-2">
+                <button onClick={openCalculator} className="w-full md:w-auto px-10 py-5 bg-zinc-950 text-white rounded-full font-semibold hover:bg-zinc-800 transition-all active:scale-[0.98] shadow-lg flex items-center justify-center gap-2">
                   Receber Orçamento
                 </button>
               </div>

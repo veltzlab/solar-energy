@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { MapPin, Phone, EnvelopeSimple, WhatsappLogo, CheckCircle } from "@phosphor-icons/react";
 import { useCrmStore } from "../store/useCrmStore";
-import { sendContactMessage } from "../lib/api";
+import { useFormValidation } from "../lib/useFormValidation";
 
 export function Contacts() {
   const [name, setName] = useState("");
@@ -13,37 +13,45 @@ export function Contacts() {
   const addLead = useCrmStore(state => state.addLead);
   const addNote = useCrmStore(state => state.addNote);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const { validate, markTouched, getFieldError } = useFormValidation({
+    name: { required: "Nome é obrigatório", minLength: { value: 2, message: "Nome deve ter pelo menos 2 caracteres" } },
+    email: { email: "Email inválido" },
+    phone: { required: "Telefone é obrigatório", phone: "Telefone deve ter pelo menos 10 dígitos" },
+  });
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name || !phone) return;
+    const values = { name, email, phone };
+    markTouched('name');
+    markTouched('email');
+    markTouched('phone');
+    if (!validate(values)) return;
 
-    // Adiciona o lead ao CRM com valores padrão para os campos numéricos
-    const leadId = addLead({
-      nome: name,
-      whatsapp: phone,
-      valorConta: 0,
-      tipoImovel: "Contato Site",
-      economiaProjetada: 0,
-      sistemaIndicado: 0,
-      payback: 0
-    });
+    try {
+      const leadId = await addLead({
+        nome: name,
+        whatsapp: phone,
+        valorConta: 0,
+        tipoImovel: "Contato Site",
+        economiaProjetada: 0,
+        sistemaIndicado: 0,
+        payback: 0
+      });
 
-    // Adiciona o email e a mensagem como a primeira nota do lead
-    addNote(leadId, `Email: ${email}\n\nMensagem: ${message}`);
+      await addNote(leadId, `Email: ${email}\n\nMensagem: ${message}`);
 
-    // Dispara mensagem automática de confirmação via WhatsApp (falha silenciosamente)
-    sendContactMessage({ nome: name, whatsapp: phone });
+      setIsSubmitted(true);
+      setName("");
+      setEmail("");
+      setPhone("");
+      setMessage("");
 
-    setIsSubmitted(true);
-    setName("");
-    setEmail("");
-    setPhone("");
-    setMessage("");
-
-    // Reseta o estado de sucesso após alguns segundos
-    setTimeout(() => {
-      setIsSubmitted(false);
-    }, 5000);
+      setTimeout(() => {
+        setIsSubmitted(false);
+      }, 5000);
+    } catch {
+      alert('Erro ao enviar sua mensagem. Verifique sua conexão e tente novamente.');
+    }
   };
 
   return (
@@ -118,10 +126,12 @@ export function Contacts() {
                       id="name" 
                       required
                       value={name}
-                      onChange={(e) => setName(e.target.value)}
+                      onChange={(e) => { setName(e.target.value); markTouched('name'); }}
+                      onBlur={() => markTouched('name')}
                       className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-5 py-4 text-white placeholder:text-zinc-600 focus:outline-none focus:border-[var(--color-accent)] focus:ring-1 focus:ring-[var(--color-accent)] transition-all"
                       placeholder="Seu nome"
                     />
+                    {getFieldError('name') && <p className="text-red-400 text-xs mt-1">{getFieldError('name')}</p>}
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
@@ -130,10 +140,12 @@ export function Contacts() {
                         type="email" 
                         id="email" 
                         value={email}
-                        onChange={(e) => setEmail(e.target.value)}
+                        onChange={(e) => { setEmail(e.target.value); markTouched('email'); }}
+                        onBlur={() => markTouched('email')}
                         className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-5 py-4 text-white placeholder:text-zinc-600 focus:outline-none focus:border-[var(--color-accent)] focus:ring-1 focus:ring-[var(--color-accent)] transition-all"
                         placeholder="seu@email.com"
                       />
+                      {getFieldError('email') && <p className="text-red-400 text-xs mt-1">{getFieldError('email')}</p>}
                     </div>
                     <div>
                       <label htmlFor="phone" className="block text-zinc-400 text-sm font-medium mb-2">Telefone</label>
@@ -142,10 +154,12 @@ export function Contacts() {
                         id="phone" 
                         required
                         value={phone}
-                        onChange={(e) => setPhone(e.target.value)}
+                        onChange={(e) => { setPhone(e.target.value); markTouched('phone'); }}
+                        onBlur={() => markTouched('phone')}
                         className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-5 py-4 text-white placeholder:text-zinc-600 focus:outline-none focus:border-[var(--color-accent)] focus:ring-1 focus:ring-[var(--color-accent)] transition-all"
                         placeholder="(00) 00000-0000"
                       />
+                      {getFieldError('phone') && <p className="text-red-400 text-xs mt-1">{getFieldError('phone')}</p>}
                     </div>
                   </div>
                   <div>

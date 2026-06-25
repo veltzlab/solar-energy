@@ -14,6 +14,18 @@ dist-ssr
 .env
 .env.local
 
+# WhatsApp session data (Baileys)
+server/session/
+
+# Evolution API (não utilizado no projeto atual)
+evolution/
+
+# Configs locais de assistentes de IA / ferramentas
+.agent/
+.claude/
+.opencode/
+openspec/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

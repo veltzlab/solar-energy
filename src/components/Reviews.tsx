@@ -1,5 +1,5 @@
 import { Star, GoogleLogo, ArrowRight } from "@phosphor-icons/react";
-import { openCalculator } from "../App";
+import { openCalculator } from "../lib/openCalculator";
 
 export function Reviews() {
   const reviews = [

@@ -63,15 +63,14 @@ export const useAuthStore = create<AuthStore>()(
     }),
     {
       name: 'solar-crm-auth',
-      version: 1,
+      version: 2,
       migrate: (persistedState: any, version: number) => {
-        if (version === 0) {
-          // Migração do estado antigo para o novo
+        if (version < 2) {
           return {
             ...persistedState,
             users: INITIAL_USERS,
             user: null,
-            isAuthenticated: false // Força logout para garantir que o novo objeto 'user' seja criado
+            isAuthenticated: false,
           };
         }
         return persistedState;
