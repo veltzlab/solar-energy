@@ -1,10 +1,10 @@
 import { Link } from "react-router-dom";
 import { ArrowRight, CalendarBlank, Clock, Tag } from "@phosphor-icons/react";
-import { mockPosts } from "../data/mockBlog";
+import { useBlogStore } from "../store/useBlogStore";
 
 export function RecentPosts() {
-  // Get the 3 most recent posts (assuming mockPosts are already sorted or we just slice 3)
-  const recentPosts = mockPosts.slice(0, 3);
+  const posts = useBlogStore((s) => s.posts);
+  const recentPosts = posts.slice(0, 3);
 
   return (
     <section className="py-24 bg-white relative overflow-hidden" id="blog">

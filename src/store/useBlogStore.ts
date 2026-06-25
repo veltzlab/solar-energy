@@ -1,3 +1,6 @@
+import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
+
 export interface BlogPost {
   id: string;
   slug: string;
@@ -9,14 +12,33 @@ export interface BlogPost {
   date: string;
   category: string;
   readTime: string;
+  createdAt: string;
 }
 
-export const mockPosts: BlogPost[] = [
+interface BlogStore {
+  posts: BlogPost[];
+  addPost: (data: Omit<BlogPost, 'id' | 'createdAt'>) => string;
+  updatePost: (id: string, data: Partial<Omit<BlogPost, 'id' | 'createdAt'>>) => void;
+  removePost: (id: string) => void;
+}
+
+export function slugify(text: string): string {
+  return text
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9\s-]/g, '')
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-');
+}
+
+const INITIAL_POSTS: BlogPost[] = [
   {
-    id: "1",
-    slug: "como-energia-solar-reduz-sua-conta-de-luz",
-    title: "Como a Energia Solar pode reduzir sua conta de luz em até 95%",
-    excerpt: "Entenda o funcionamento do sistema de compensação de créditos de energia e descubra como se proteger dos constantes aumentos tarifários.",
+    id: '1',
+    slug: 'como-energia-solar-reduz-sua-conta-de-luz',
+    title: 'Como a Energia Solar pode reduzir sua conta de luz em até 95%',
+    excerpt: 'Entenda o funcionamento do sistema de compensação de créditos de energia e descubra como se proteger dos constantes aumentos tarifários.',
     content: `
       <p>A energia solar deixou de ser apenas uma tecnologia do futuro para se tornar uma realidade acessível e altamente rentável no presente. Mas como exatamente instalar placas no seu telhado se traduz em economia no final do mês?</p>
 
@@ -37,17 +59,18 @@ export const mockPosts: BlogPost[] = [
 
       <p>Pronto para começar a economizar? Faça uma simulação conosco e descubra o potencial do seu telhado!</p>
     `,
-    coverImage: "https://images.unsplash.com/photo-1509391366360-2e959784a276?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80",
-    author: "Equipe Solar Energy",
-    date: "10 de Abril, 2026",
-    category: "Economia",
-    readTime: "4 min de leitura"
+    coverImage: 'https://images.unsplash.com/photo-1509391366360-2e959784a276?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80',
+    author: 'Equipe Solar Energy',
+    date: '10 de Abril, 2026',
+    category: 'Economia',
+    readTime: '4 min de leitura',
+    createdAt: '2026-04-10T10:00:00.000Z',
   },
   {
-    id: "2",
-    slug: "energia-solar-valoriza-imovel",
-    title: "Mito ou Verdade: A energia solar realmente valoriza o imóvel?",
-    excerpt: "Especialistas do mercado imobiliário apontam que propriedades com sistemas fotovoltaicos são vendidas mais rápido e com um prêmio significativo de preço.",
+    id: '2',
+    slug: 'energia-solar-valoriza-imovel',
+    title: 'Mito ou Verdade: A energia solar realmente valoriza o imóvel?',
+    excerpt: 'Especialistas do mercado imobiliário apontam que propriedades com sistemas fotovoltaicos são vendidas mais rápido e com um prêmio significativo de preço.',
     content: `
       <p>Quando pensamos em energia solar, o primeiro benefício que vem à mente é, sem dúvidas, a redução drástica na conta de luz. No entanto, existe um segundo benefício financeiro enorme que muitas vezes é ignorado no momento de decisão: a valorização imobiliária.</p>
 
@@ -68,23 +91,24 @@ export const mockPosts: BlogPost[] = [
 
       <p>Portanto, instalar energia solar não é um "gasto" que se perde na estrutura da casa. É um investimento com duplo retorno: a economia mensal e a valorização patrimonial.</p>
     `,
-    coverImage: "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80",
-    author: "Equipe Solar Energy",
-    date: "05 de Abril, 2026",
-    category: "Investimento",
-    readTime: "3 min de leitura"
+    coverImage: 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80',
+    author: 'Equipe Solar Energy',
+    date: '05 de Abril, 2026',
+    category: 'Investimento',
+    readTime: '3 min de leitura',
+    createdAt: '2026-04-05T10:00:00.000Z',
   },
   {
-    id: "3",
-    slug: "manutencao-paineis-solares-guia",
-    title: "Guia completo de manutenção para seus painéis solares",
-    excerpt: "Descubra o que é necessário para manter seu sistema fotovoltaico operando em capacidade máxima com um esforço mínimo.",
+    id: '3',
+    slug: 'manutencao-paineis-solares-guia',
+    title: 'Guia completo de manutenção para seus painéis solares',
+    excerpt: 'Descubra o que é necessário para manter seu sistema fotovoltaico operando em capacidade máxima com um esforço mínimo.',
     content: `
       <p>Muitas pessoas hesitam em instalar energia solar por medo de dores de cabeça com manutenção. A boa notícia? Os sistemas fotovoltaicos são notórios por exigirem pouquíssima manutenção. Como não possuem partes móveis (peças que giram ou se desgastam com atrito), o desgaste mecânico é quase inexistente.</p>
 
       <h3>O que precisa ser feito?</h3>
       <p>Na grande maioria dos casos, a única "manutenção" necessária para o seu sistema solar é a <strong>limpeza periódica dos painéis</strong>.</p>
-      
+
       <p>A poeira, folhas, fezes de pássaros e fuligem podem se acumular na superfície dos painéis ao longo do tempo. Como a luz precisa penetrar no vidro para chegar às células de silício, qualquer sujeira atua como uma barreira que reduz a eficiência da geração de energia (uma perda que pode variar de 5% a 20%, dependendo da sujeira).</p>
 
       <h3>Com que frequência devo limpar?</h3>
@@ -103,17 +127,18 @@ export const mockPosts: BlogPost[] = [
 
       <p>De forma geral, instalar energia solar é investir em tranquilidade. Você instala e deixa o sol fazer o trabalho duro.</p>
     `,
-    coverImage: "https://images.unsplash.com/photo-1559302504-64aae6ca6b6d?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80",
-    author: "Equipe Solar Energy",
-    date: "28 de Março, 2026",
-    category: "Tecnologia",
-    readTime: "5 min de leitura"
+    coverImage: 'https://images.unsplash.com/photo-1559302504-64aae6ca6b6d?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80',
+    author: 'Equipe Solar Energy',
+    date: '28 de Março, 2026',
+    category: 'Tecnologia',
+    readTime: '5 min de leitura',
+    createdAt: '2026-03-28T10:00:00.000Z',
   },
   {
-    id: "4",
-    slug: "passo-a-passo-instalacao-energia-solar",
-    title: "O passo a passo da instalação: Do orçamento ao sistema ligado",
-    excerpt: "Saiba exatamente como funciona o processo de instalação de um sistema de energia solar, desde o primeiro contato até o início da geração.",
+    id: '4',
+    slug: 'passo-a-passo-instalacao-energia-solar',
+    title: 'O passo a passo da instalação: Do orçamento ao sistema ligado',
+    excerpt: 'Saiba exatamente como funciona o processo de instalação de um sistema de energia solar, desde o primeiro contato até o início da geração.',
     content: `
       <p>Tomar a decisão de investir em energia solar é o primeiro passo. Mas o que acontece depois? Muitas pessoas imaginam que o processo de instalação será demorado e destrutivo (como uma reforma em casa). A realidade, porém, é bem diferente.</p>
 
@@ -134,10 +159,35 @@ export const mockPosts: BlogPost[] = [
 
       <p>Todo o processo, do fechamento do contrato até a máquina girando, costuma levar entre 30 a 60 dias, sendo que o seu envolvimento é mínimo. Nós cuidamos de cada detalhe técnico e burocrático para você focar apenas em acompanhar a economia pelo aplicativo do celular.</p>
     `,
-    coverImage: "https://images.unsplash.com/photo-1497440001374-f26997328c1b?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80",
-    author: "Equipe Solar Energy",
-    date: "15 de Março, 2026",
-    category: "Guia",
-    readTime: "4 min de leitura"
-  }
+    coverImage: 'https://images.unsplash.com/photo-1497440001374-f26997328c1b?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80',
+    author: 'Equipe Solar Energy',
+    date: '15 de Março, 2026',
+    category: 'Guia',
+    readTime: '4 min de leitura',
+    createdAt: '2026-03-15T10:00:00.000Z',
+  },
 ];
+
+export const useBlogStore = create<BlogStore>()(
+  persist(
+    (set) => ({
+      posts: INITIAL_POSTS,
+
+      addPost: (data) => {
+        const id = `post_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+        const newPost: BlogPost = { ...data, id, createdAt: new Date().toISOString() };
+        set((s) => ({ posts: [newPost, ...s.posts] }));
+        return id;
+      },
+
+      updatePost: (id, data) => {
+        set((s) => ({ posts: s.posts.map((p) => (p.id === id ? { ...p, ...data } : p)) }));
+      },
+
+      removePost: (id) => {
+        set((s) => ({ posts: s.posts.filter((p) => p.id !== id) }));
+      },
+    }),
+    { name: 'solar-blog-posts' }
+  )
+);

@@ -2,12 +2,13 @@ import { Link } from "react-router-dom";
 import { ArrowRight, CalendarBlank, Clock, Tag } from "@phosphor-icons/react";
 import { Navbar } from "../components/Navbar";
 import { Footer } from "../components/Footer";
-import { mockPosts } from "../data/mockBlog";
+import { useBlogStore } from "../store/useBlogStore";
 import { useState, useEffect } from "react";
 import { SearchPalette } from "../components/SearchPalette";
 import { CalculatorModal } from "../components/CalculatorModal";
 
 export function Blog() {
+  const posts = useBlogStore((s) => s.posts);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isCalculatorOpen, setIsCalculatorOpen] = useState(false);
 
@@ -43,7 +44,7 @@ export function Blog() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {mockPosts.map((post) => (
+            {posts.map((post) => (
               <Link 
                 key={post.id} 
                 to={`/blog/${post.slug}`}

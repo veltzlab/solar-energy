@@ -7,6 +7,7 @@ export interface User {
   email: string;
   name: string;
   role: UserRole;
+  canManageBlog?: boolean;
 }
 
 export interface ProfileUser {
@@ -15,6 +16,7 @@ export interface ProfileUser {
   name: string;
   role: UserRole;
   password?: string;
+  canManageBlog?: boolean;
 }
 
 interface AuthStore {
@@ -27,8 +29,9 @@ interface AuthStore {
   login: (email: string, password: string) => Promise<boolean>;
   logout: () => Promise<void>;
   fetchUsers: () => Promise<void>;
-  addUser: (data: { name: string; email: string; password: string; role: UserRole }) => Promise<boolean>;
+  addUser: (data: { name: string; email: string; password: string; role: UserRole; canManageBlog?: boolean }) => Promise<boolean>;
   removeUser: (email: string) => Promise<void>;
+  setBlogAccess: (email: string, allowed: boolean) => void;
 }
 
 const INITIAL_USERS: ProfileUser[] = [
@@ -55,7 +58,10 @@ export const useAuthStore = create<AuthStore>()(
           (u) => u.email.toLowerCase() === email.toLowerCase() && u.password === password
         );
         if (!found) return false;
-        set({ isAuthenticated: true, user: { email: found.email, name: found.name, role: found.role } });
+        set({
+          isAuthenticated: true,
+          user: { email: found.email, name: found.name, role: found.role, canManageBlog: found.canManageBlog ?? false },
+        });
         return true;
       },
 
@@ -67,10 +73,10 @@ export const useAuthStore = create<AuthStore>()(
         // Já carregado do estado local
       },
 
-      addUser: async ({ name, email, password, role }) => {
+      addUser: async ({ name, email, password, role, canManageBlog }) => {
         const exists = get().users.find((u) => u.email.toLowerCase() === email.toLowerCase());
         if (exists) return false;
-        const newUser: ProfileUser = { id: Date.now().toString(), email, name, role, password };
+        const newUser: ProfileUser = { id: Date.now().toString(), email, name, role, password, canManageBlog };
         set({ users: [...get().users, newUser] });
         return true;
       },
@@ -78,6 +84,13 @@ export const useAuthStore = create<AuthStore>()(
       removeUser: async (email) => {
         if (email === 'admin@solarenergy.com') return;
         set((s) => ({ users: s.users.filter((u) => u.email !== email) }));
+      },
+
+      setBlogAccess: (email, allowed) => {
+        set((s) => ({
+          users: s.users.map((u) => (u.email === email ? { ...u, canManageBlog: allowed } : u)),
+          user: s.user?.email === email ? { ...s.user, canManageBlog: allowed } : s.user,
+        }));
       },
     }),
     {

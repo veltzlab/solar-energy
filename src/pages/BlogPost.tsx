@@ -2,14 +2,15 @@ import { useParams, Link, Navigate } from "react-router-dom";
 import { ArrowLeft, CalendarBlank, Clock, UserCircle, ShareNetwork } from "@phosphor-icons/react";
 import { Navbar } from "../components/Navbar";
 import { Footer } from "../components/Footer";
-import { mockPosts } from "../data/mockBlog";
+import { useBlogStore } from "../store/useBlogStore";
 import { useState, useEffect } from "react";
 import { SearchPalette } from "../components/SearchPalette";
 import { CalculatorModal } from "../components/CalculatorModal";
 
 export function BlogPost() {
   const { slug } = useParams();
-  const post = mockPosts.find(p => p.slug === slug);
+  const posts = useBlogStore((s) => s.posts);
+  const post = posts.find(p => p.slug === slug);
 
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isCalculatorOpen, setIsCalculatorOpen] = useState(false);
