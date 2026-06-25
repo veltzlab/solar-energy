@@ -280,13 +280,15 @@ export function LeadDetailModal({ leadId, onClose }: LeadDetailModalProps) {
                   href={buildWhatsAppMessage(lead)}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex-1 flex items-center justify-center gap-2.5 py-3 rounded-xl bg-green-500 hover:bg-green-600 text-white font-bold transition-colors"
+                  className="flex-1 flex items-center justify-center gap-2.5 py-3 px-3 rounded-xl bg-green-500 hover:bg-green-600 text-white font-bold transition-colors"
                 >
-                  <WhatsappLogo size={20} weight="fill" />
-                  {lead.status === 'novo'
-                    ? 'Iniciar conversa com mensagem personalizada'
-                    : `Abrir WhatsApp — ${lead.whatsapp.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3')}`
-                  }
+                  <WhatsappLogo size={20} weight="fill" className="shrink-0" />
+                  <span className="leading-tight text-center text-[13px]">
+                    {lead.status === 'novo'
+                      ? 'Iniciar conversa com mensagem personalizada'
+                      : `Abrir WhatsApp — ${lead.whatsapp.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3')}`
+                    }
+                  </span>
                 </a>
                 <a
                   href={buildWhatsAppWebUrl(lead)}
