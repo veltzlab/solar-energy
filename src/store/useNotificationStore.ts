@@ -11,11 +11,13 @@ export interface LeadReminder {
   done: boolean;
   notified?: boolean;
   createdAt: string;
+  type?: 'reminder' | 'assignment';
 }
 
 interface NotificationStore {
   reminders: LeadReminder[];
   addReminder: (data: { leadId: string; leadNome: string; vendedorEmail: string; message: string; remindAt: string }) => void;
+  notifyAssignment: (data: { leadId: string; leadNome: string; vendedorEmail: string; fromName: string }) => void;
   markDone: (id: string) => void;
   markNotified: (id: string) => void;
   removeReminder: (id: string) => void;
@@ -33,6 +35,22 @@ export const useNotificationStore = create<NotificationStore>()(
           id: `rem_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
           done: false,
           createdAt: new Date().toISOString(),
+          type: 'reminder',
+        };
+        set((s) => ({ reminders: [reminder, ...s.reminders] }));
+      },
+
+      notifyAssignment: ({ leadId, leadNome, vendedorEmail, fromName }) => {
+        const reminder: LeadReminder = {
+          id: `assign_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+          leadId,
+          leadNome,
+          vendedorEmail,
+          message: `${fromName} te passou este lead`,
+          remindAt: new Date().toISOString(),
+          done: false,
+          createdAt: new Date().toISOString(),
+          type: 'assignment',
         };
         set((s) => ({ reminders: [reminder, ...s.reminders] }));
       },

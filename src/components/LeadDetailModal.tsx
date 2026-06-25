@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { X, WhatsappLogo, User, CurrencyDollar, Fire, Drop, Snowflake, Clock, Note, ArrowRight, Trash, Headset, SignOut, BellRinging, Check } from '@phosphor-icons/react';
+import { X, WhatsappLogo, User, CurrencyDollar, Fire, Drop, Snowflake, Clock, Note, ArrowRight, Trash, Headset, BellRinging, Check } from '@phosphor-icons/react';
 import type { Lead, LeadStatus } from '../store/useCrmStore';
 import { useCrmStore } from '../store/useCrmStore';
 import { useAuthStore } from '../store/useAuthStore';
@@ -48,7 +48,7 @@ export function LeadDetailModal({ leadId, onClose }: LeadDetailModalProps) {
   const { leads, updateLead, updateLeadStatus, removeLead, addNote, removeNote, claimLead, releaseLead } = useCrmStore();
   const lead = leads.find(l => l.id === leadId) || null;
   const { theme, user, users } = useAuthStore();
-  const { reminders, addReminder, markDone, removeReminder, removeForLead } = useNotificationStore();
+  const { reminders, addReminder, notifyAssignment, markDone, removeReminder, removeForLead } = useNotificationStore();
 
   const [interesse, setInteresse] = useState<Lead['interesse']>(undefined);
   const [tipoTelhado, setTipoTelhado] = useState('');
@@ -115,15 +115,10 @@ export function LeadDetailModal({ leadId, onClose }: LeadDetailModalProps) {
   };
 
   const isMine = !!user && lead.assignedToEmail === user.email;
-  const canRelease = isMine || user?.role === 'admin';
 
   const handleClaim = () => {
     if (!user) return;
     claimLead(lead.id, { email: user.email, name: user.name });
-  };
-
-  const handleRelease = () => {
-    releaseLead(lead.id);
   };
 
   const handleAssign = (email: string) => {
@@ -131,6 +126,9 @@ export function LeadDetailModal({ leadId, onClose }: LeadDetailModalProps) {
     const vendedor = users.find((u) => u.email === email);
     if (!vendedor) return;
     claimLead(lead.id, { email: vendedor.email, name: vendedor.name });
+    if (user && vendedor.email !== user.email) {
+      notifyAssignment({ leadId: lead.id, leadNome: lead.nome, vendedorEmail: vendedor.email, fromName: user.name });
+    }
   };
 
   const leadReminders = reminders
@@ -245,10 +243,11 @@ export function LeadDetailModal({ leadId, onClose }: LeadDetailModalProps) {
                   )}
                 </div>
 
-                {user?.role === 'admin' ? (
+                {(user?.role === 'admin' || isMine) ? (
                   <select
                     value={lead.assignedToEmail ?? ''}
                     onChange={(e) => handleAssign(e.target.value)}
+                    title="Transferir para outro usuário"
                     className="shrink-0 bg-white/10 border border-white/10 text-white text-xs font-bold rounded-lg px-2.5 py-1.5 outline-none focus:border-[var(--color-accent)] max-w-[140px]"
                   >
                     <option value="" className="text-zinc-900">Sem atendente</option>
@@ -262,14 +261,6 @@ export function LeadDetailModal({ leadId, onClose }: LeadDetailModalProps) {
                     className="shrink-0 px-3.5 py-1.5 rounded-lg bg-[var(--color-accent)] text-zinc-950 text-xs font-bold hover:brightness-105 transition-all"
                   >
                     Assumir
-                  </button>
-                ) : canRelease ? (
-                  <button
-                    onClick={handleRelease}
-                    title="Liberar atendimento"
-                    className="shrink-0 p-2 rounded-lg text-zinc-400 hover:text-red-400 hover:bg-red-500/10 transition-colors"
-                  >
-                    <SignOut size={16} />
                   </button>
                 ) : null}
               </div>

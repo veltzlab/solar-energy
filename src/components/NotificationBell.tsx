@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Bell, BellSlash, Check, Trash, WhatsappLogo } from '@phosphor-icons/react';
+import { Bell, BellSlash, Check, Trash, WhatsappLogo, Headset } from '@phosphor-icons/react';
 import { useAuthStore } from '../store/useAuthStore';
 import { useNotificationStore } from '../store/useNotificationStore';
 import {
@@ -54,7 +54,8 @@ export function NotificationBell({ onOpenLead }: NotificationBellProps) {
     if (permission !== 'granted') return;
     for (const rem of myReminders) {
       if (!rem.notified && new Date(rem.remindAt).getTime() <= now) {
-        showBrowserNotification(`Lembrete: ${rem.leadNome}`, {
+        const title = rem.type === 'assignment' ? `Novo lead: ${rem.leadNome}` : `Lembrete: ${rem.leadNome}`;
+        showBrowserNotification(title, {
           body: rem.message,
           tag: rem.id,
         });
@@ -127,20 +128,23 @@ export function NotificationBell({ onOpenLead }: NotificationBellProps) {
           ) : (
             <div className="divide-y divide-white/5">
               {myReminders.map((rem) => {
-                const isOverdue = new Date(rem.remindAt).getTime() <= now;
+                const isAssignment = rem.type === 'assignment';
+                const isOverdue = !isAssignment && new Date(rem.remindAt).getTime() <= now;
                 return (
-                  <div key={rem.id} className={`px-4 py-3 flex items-start gap-3 ${isOverdue ? 'bg-red-500/5' : ''}`}>
+                  <div key={rem.id} className={`px-4 py-3 flex items-start gap-3 ${isOverdue ? 'bg-red-500/5' : isAssignment ? 'bg-[var(--color-accent)]/5' : ''}`}>
                     <button
                       onClick={() => { onOpenLead(rem.leadId); setOpen(false); }}
                       className="flex-1 min-w-0 text-left"
                     >
                       <p className={`text-sm font-bold flex items-center gap-1.5 truncate ${theme === 'dark' ? 'text-white' : 'text-zinc-900'}`}>
-                        <WhatsappLogo size={13} className="text-green-500 shrink-0" />
+                        {isAssignment
+                          ? <Headset size={13} weight="fill" className="text-[var(--color-accent)] shrink-0" />
+                          : <WhatsappLogo size={13} className="text-green-500 shrink-0" />}
                         {rem.leadNome}
                       </p>
                       <p className={`text-xs truncate ${theme === 'dark' ? 'text-zinc-400' : 'text-zinc-500'}`}>{rem.message}</p>
-                      <p className={`text-[11px] mt-0.5 ${isOverdue ? 'text-red-400 font-bold' : 'text-zinc-500'}`}>
-                        {formatDate(rem.remindAt)} {isOverdue ? '· Atrasado' : ''}
+                      <p className={`text-[11px] mt-0.5 ${isOverdue ? 'text-red-400 font-bold' : isAssignment ? 'text-[var(--color-accent)] font-bold' : 'text-zinc-500'}`}>
+                        {isAssignment ? 'Novo' : formatDate(rem.remindAt)} {isOverdue ? '· Atrasado' : ''}
                       </p>
                     </button>
                     <div className="flex flex-col gap-1 shrink-0">
