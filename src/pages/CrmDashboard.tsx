@@ -204,13 +204,20 @@ export function CrmDashboard() {
   const [newUserRole, setNewUserRole] = useState<UserRole>('vendedor');
   const [newUserCanManageBlog, setNewUserCanManageBlog] = useState(false);
 
+  // No Dashboard (Kanban), vendedores só veem leads sem atendente ou que eles mesmos assumiram.
+  // Admins veem todos. A aba Contatos usa `leads` diretamente, sem essa restrição.
+  const dashboardLeads = useMemo(() => {
+    if (user?.role === 'admin') return leads;
+    return leads.filter((l) => !l.assignedToEmail || l.assignedToEmail === user?.email);
+  }, [leads, user]);
+
   const tiposImovel = useMemo(() => {
-    const tipos = [...new Set(leads.map((l) => l.tipoImovel).filter(Boolean))];
+    const tipos = [...new Set(dashboardLeads.map((l) => l.tipoImovel).filter(Boolean))];
     return tipos;
-  }, [leads]);
+  }, [dashboardLeads]);
 
   const filteredLeads = useMemo(() => {
-    return leads.filter((l) => {
+    return dashboardLeads.filter((l) => {
       if (busca.trim()) {
         const q = busca.toLowerCase();
         if (!l.nome.toLowerCase().includes(q) && !l.whatsapp.includes(busca.replace(/\D/g, ''))) return false;
@@ -228,7 +235,7 @@ export function CrmDashboard() {
       }
       return true;
     });
-  }, [leads, busca, filtroInteresse, filtroImovel, filtroValorMin, filtroValorMax, filtroPeriodo, now]);
+  }, [dashboardLeads, busca, filtroInteresse, filtroImovel, filtroValorMin, filtroValorMax, filtroPeriodo, now]);
 
   const hasActiveFilters = busca || filtroInteresse !== 'todos' || filtroImovel !== 'todos' || filtroValorMin || filtroValorMax || filtroPeriodo !== 'todos';
 
@@ -271,10 +278,10 @@ export function CrmDashboard() {
     }
   };
 
-  const totalLeads = leads.length;
-  const totalEconomia = leads.reduce((acc, l) => acc + l.economiaProjetada, 0);
-  const totalFechados = leads.filter((l) => l.status === 'fechado').length;
-  const economiaFechados = leads.filter((l) => l.status === 'fechado').reduce((acc, l) => acc + l.economiaProjetada, 0);
+  const totalLeads = dashboardLeads.length;
+  const totalEconomia = dashboardLeads.reduce((acc, l) => acc + l.economiaProjetada, 0);
+  const totalFechados = dashboardLeads.filter((l) => l.status === 'fechado').length;
+  const economiaFechados = dashboardLeads.filter((l) => l.status === 'fechado').reduce((acc, l) => acc + l.economiaProjetada, 0);
 
   return (
     <div className={`h-screen font-sans flex overflow-hidden transition-colors duration-300 ${theme === 'dark' ? 'bg-zinc-950 text-white' : 'bg-zinc-50 text-zinc-950'}`}>
