@@ -14,6 +14,7 @@ import { WhatsAppFloating } from './components/WhatsAppFloating';
 import { useAuthStore } from './store/useAuthStore';
 
 const HowItWorks = lazy(() => import('./components/HowItWorks').then(m => ({ default: m.HowItWorks })));
+const MobileApp = lazy(() => import('./components/MobileApp').then(m => ({ default: m.MobileApp })));
 const ClientShowcase = lazy(() => import('./components/ClientShowcase').then(m => ({ default: m.ClientShowcase })));
 const ServiceMap = lazy(() => import('./components/ServiceMap').then(m => ({ default: m.ServiceMap })));
 const Reviews = lazy(() => import('./components/Reviews').then(m => ({ default: m.Reviews })));
@@ -78,6 +79,9 @@ function LandingPage() {
         <Calculator />
         <Suspense fallback={<div className="h-64 flex items-center justify-center"><span className="text-zinc-400">Carregando...</span></div>}>
           <HowItWorks />
+        </Suspense>
+        <Suspense fallback={<div className="h-64 flex items-center justify-center"><span className="text-zinc-400">Carregando...</span></div>}>
+          <MobileApp />
         </Suspense>
         <Suspense fallback={<div className="h-64 flex items-center justify-center"><span className="text-zinc-400">Carregando...</span></div>}>
           <ClientShowcase />
