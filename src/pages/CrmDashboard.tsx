@@ -295,21 +295,13 @@ export function CrmDashboard() {
             <SunDim size={32} weight="fill" className="text-[var(--color-accent)]" />
             <h1 className={`font-black text-lg tracking-tight ${theme === 'dark' ? 'text-white' : 'text-zinc-900'}`}>Solar CRM</h1>
           </div>
-          <div className="flex items-center gap-1">
-            <NotificationBell
-              onOpenLead={(leadId) => {
-                setActiveTab('kanban');
-                setSelectedLeadId(leadId);
-              }}
-            />
-            <button
-              onClick={toggleTheme}
-              className={`p-2 rounded-lg transition-all ${theme === 'dark' ? 'hover:bg-white/10 text-zinc-400' : 'hover:bg-zinc-200 text-zinc-600'}`}
-              title={theme === 'dark' ? 'Mudar para modo claro' : 'Mudar para modo escuro'}
-            >
-              {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
-            </button>
-          </div>
+          <button
+            onClick={toggleTheme}
+            className={`p-2 rounded-lg transition-all ${theme === 'dark' ? 'hover:bg-white/10 text-zinc-400' : 'hover:bg-zinc-200 text-zinc-600'}`}
+            title={theme === 'dark' ? 'Mudar para modo claro' : 'Mudar para modo escuro'}
+          >
+            {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
+          </button>
         </div>
 
         <nav className="flex-1 px-4 space-y-1">
@@ -406,6 +398,12 @@ export function CrmDashboard() {
                     <p className="text-zinc-500 text-[10px] uppercase font-bold">Total de Leads</p>
                     <p className={`text-2xl font-black ${theme === 'dark' ? 'text-white' : 'text-zinc-900'}`}>{totalLeads}</p>
                   </div>
+                  <NotificationBell
+                    onOpenLead={(leadId) => {
+                      setActiveTab('kanban');
+                      setSelectedLeadId(leadId);
+                    }}
+                  />
                   <div className={`border rounded-2xl px-6 py-3 text-right transition-colors ${theme === 'dark' ? 'bg-white/5 border-white/10' : 'bg-white border-zinc-200 shadow-sm'}`}>
                     <p className="text-zinc-500 text-[10px] uppercase font-bold">Economia Projetada</p>
                     <p className="text-2xl font-black text-[var(--color-accent)]">{formatCurrency(totalEconomia)}</p>
