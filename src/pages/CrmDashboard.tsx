@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect, memo, lazy, Suspense } from 'react';
 import { useCrmStore } from '../store/useCrmStore';
 import type { Lead, LeadStatus } from '../store/useCrmStore';
 import { useAuthStore } from '../store/useAuthStore';
+import { useNotificationStore } from '../store/useNotificationStore';
 import type { UserRole } from '../store/useAuthStore';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import type { DropResult } from '@hello-pangea/dnd';
@@ -9,6 +10,7 @@ import { WhatsappLogo, User, CurrencyDollar, Fire, Drop, Snowflake, SunDim, Magn
 import { LeadDetailModal } from '../components/LeadDetailModal';
 import { NewLeadModal } from '../components/NewLeadModal';
 import { ErrorBoundary } from '../components/ErrorBoundary';
+import { NotificationBell } from '../components/NotificationBell';
 
 const BlogManager = lazy(() => import('../components/BlogManager').then((m) => ({ default: m.BlogManager })));
 
@@ -40,6 +42,7 @@ const interestIcon = {
 const LeadCard = memo(function LeadCard({ lead, index, onOpenDetail }: { lead: Lead; index: number; onOpenDetail: (lead: Lead) => void }) {
   const removeLead = useCrmStore((s) => s.removeLead);
   const claimLead = useCrmStore((s) => s.claimLead);
+  const removeForLead = useNotificationStore((s) => s.removeForLead);
   const theme = useAuthStore((s) => s.theme);
   const user = useAuthStore((s) => s.user);
 
@@ -47,6 +50,7 @@ const LeadCard = memo(function LeadCard({ lead, index, onOpenDetail }: { lead: L
     e.stopPropagation();
     if (window.confirm(`Tem certeza que deseja excluir o contato de ${lead.nome}?`)) {
       removeLead(lead.id);
+      removeForLead(lead.id);
     }
   };
 
@@ -172,6 +176,7 @@ type FilterPeriodo = 'todos' | 'hoje' | 'semana' | 'mes';
 export function CrmDashboard() {
   const { leads, updateLeadStatus, removeLead, fetchLeads } = useCrmStore();
   const { user, logout, users, addUser, removeUser, setBlogAccess, theme, toggleTheme, fetchUsers } = useAuthStore();
+  const removeForLeadReminders = useNotificationStore((s) => s.removeForLead);
   const [selectedLeadId, setSelectedLeadId] = useState<string | null>(null);
   const [isNewLeadModalOpen, setIsNewLeadModalOpen] = useState(false);
   const [creationStatus, setCreationStatus] = useState<LeadStatus | undefined>(undefined);
@@ -290,13 +295,21 @@ export function CrmDashboard() {
             <SunDim size={32} weight="fill" className="text-[var(--color-accent)]" />
             <h1 className={`font-black text-lg tracking-tight ${theme === 'dark' ? 'text-white' : 'text-zinc-900'}`}>Solar CRM</h1>
           </div>
-          <button 
-            onClick={toggleTheme}
-            className={`p-2 rounded-lg transition-all ${theme === 'dark' ? 'hover:bg-white/10 text-zinc-400' : 'hover:bg-zinc-200 text-zinc-600'}`}
-            title={theme === 'dark' ? 'Mudar para modo claro' : 'Mudar para modo escuro'}
-          >
-            {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
-          </button>
+          <div className="flex items-center gap-1">
+            <NotificationBell
+              onOpenLead={(leadId) => {
+                setActiveTab('kanban');
+                setSelectedLeadId(leadId);
+              }}
+            />
+            <button
+              onClick={toggleTheme}
+              className={`p-2 rounded-lg transition-all ${theme === 'dark' ? 'hover:bg-white/10 text-zinc-400' : 'hover:bg-zinc-200 text-zinc-600'}`}
+              title={theme === 'dark' ? 'Mudar para modo claro' : 'Mudar para modo escuro'}
+            >
+              {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
+            </button>
+          </div>
         </div>
 
         <nav className="flex-1 px-4 space-y-1">
@@ -687,6 +700,7 @@ export function CrmDashboard() {
                                   e.stopPropagation();
                                   if (window.confirm(`Tem certeza que deseja excluir ${l.nome}?`)) {
                                     removeLead(l.id);
+                                    removeForLeadReminders(l.id);
                                   }
                                 }}
                                 className="p-2 rounded-lg bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white transition-all opacity-0 group-hover:opacity-100"

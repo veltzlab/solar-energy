@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
-import { X, WhatsappLogo, User, CurrencyDollar, Fire, Drop, Snowflake, Clock, Note, ArrowRight, Trash, Headset, SignOut } from '@phosphor-icons/react';
+import { X, WhatsappLogo, User, CurrencyDollar, Fire, Drop, Snowflake, Clock, Note, ArrowRight, Trash, Headset, SignOut, BellRinging, Check } from '@phosphor-icons/react';
 import type { Lead, LeadStatus } from '../store/useCrmStore';
 import { useCrmStore } from '../store/useCrmStore';
 import { useAuthStore } from '../store/useAuthStore';
+import { useNotificationStore } from '../store/useNotificationStore';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface LeadDetailModalProps {
@@ -42,7 +43,8 @@ function buildWhatsAppMessage(lead: Lead) {
 export function LeadDetailModal({ leadId, onClose }: LeadDetailModalProps) {
   const { leads, updateLead, updateLeadStatus, removeLead, addNote, removeNote, claimLead, releaseLead } = useCrmStore();
   const lead = leads.find(l => l.id === leadId) || null;
-  const { theme, user } = useAuthStore();
+  const { theme, user, users } = useAuthStore();
+  const { reminders, addReminder, markDone, removeReminder, removeForLead } = useNotificationStore();
 
   const [interesse, setInteresse] = useState<Lead['interesse']>(undefined);
   const [tipoTelhado, setTipoTelhado] = useState('');
@@ -50,6 +52,8 @@ export function LeadDetailModal({ leadId, onClose }: LeadDetailModalProps) {
   const [newNote, setNewNote] = useState('');
   const [consumoConfirmado, setConsumoConfirmado] = useState('');
   const [saved, setSaved] = useState(false);
+  const [reminderMessage, setReminderMessage] = useState('Enviar mensagem de follow-up');
+  const [reminderDate, setReminderDate] = useState('');
 
   // Carrega dados do lead ao abrir ou quando o leadId muda
   useEffect(() => {
@@ -95,6 +99,7 @@ export function LeadDetailModal({ leadId, onClose }: LeadDetailModalProps) {
   const handleDelete = () => {
     if (confirm(`Remover o lead de ${lead.nome}?`)) {
       removeLead(lead.id);
+      removeForLead(lead.id);
       onClose();
     }
   };
@@ -116,6 +121,34 @@ export function LeadDetailModal({ leadId, onClose }: LeadDetailModalProps) {
   const handleRelease = () => {
     releaseLead(lead.id);
   };
+
+  const handleAssign = (email: string) => {
+    if (!email) { releaseLead(lead.id); return; }
+    const vendedor = users.find((u) => u.email === email);
+    if (!vendedor) return;
+    claimLead(lead.id, { email: vendedor.email, name: vendedor.name });
+  };
+
+  const leadReminders = reminders
+    .filter((r) => r.leadId === lead.id)
+    .sort((a, b) => new Date(a.remindAt).getTime() - new Date(b.remindAt).getTime());
+
+  const handleAddReminder = () => {
+    if (!reminderDate) return;
+    const targetEmail = lead.assignedToEmail ?? user?.email;
+    if (!targetEmail) return;
+    addReminder({
+      leadId: lead.id,
+      leadNome: lead.nome,
+      vendedorEmail: targetEmail,
+      message: reminderMessage.trim() || 'Enviar mensagem de follow-up',
+      remindAt: new Date(reminderDate).toISOString(),
+    });
+    setReminderDate('');
+  };
+
+  const formatReminderDate = (iso: string) =>
+    new Date(iso).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' });
 
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
@@ -207,7 +240,19 @@ export function LeadDetailModal({ leadId, onClose }: LeadDetailModalProps) {
                     <p className="text-sm text-zinc-400 font-medium">Sem vendedor atribuído</p>
                   )}
                 </div>
-                {!lead.assignedToName ? (
+
+                {user?.role === 'admin' ? (
+                  <select
+                    value={lead.assignedToEmail ?? ''}
+                    onChange={(e) => handleAssign(e.target.value)}
+                    className="shrink-0 bg-white/10 border border-white/10 text-white text-xs font-bold rounded-lg px-2.5 py-1.5 outline-none focus:border-[var(--color-accent)] max-w-[140px]"
+                  >
+                    <option value="" className="text-zinc-900">Sem atendente</option>
+                    {users.map((u) => (
+                      <option key={u.email} value={u.email} className="text-zinc-900">{u.name}</option>
+                    ))}
+                  </select>
+                ) : !lead.assignedToName ? (
                   <button
                     onClick={handleClaim}
                     className="shrink-0 px-3.5 py-1.5 rounded-lg bg-[var(--color-accent)] text-zinc-950 text-xs font-bold hover:brightness-105 transition-all"
@@ -329,6 +374,99 @@ export function LeadDetailModal({ leadId, onClose }: LeadDetailModalProps) {
                       {h}
                     </button>
                   ))}
+                </div>
+              </div>
+
+              {/* Lembretes de contato */}
+              <div className="space-y-4">
+                <label className="block text-xs font-bold text-zinc-500 uppercase tracking-wider">
+                  <span className="flex items-center gap-1.5">
+                    <BellRinging size={14} />
+                    Lembretes de Contato
+                  </span>
+                </label>
+
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <input
+                    type="text"
+                    value={reminderMessage}
+                    onChange={(e) => setReminderMessage(e.target.value)}
+                    placeholder="Mensagem do lembrete..."
+                    className={`flex-1 border-2 rounded-xl px-4 py-2.5 font-medium placeholder:text-zinc-500 outline-none transition-colors text-sm ${
+                      theme === 'dark' ? 'bg-zinc-900 border-white/10 text-white focus:border-[var(--color-accent)]' : 'bg-zinc-50 border-zinc-200 text-zinc-900 focus:border-zinc-950'
+                    }`}
+                  />
+                  <input
+                    type="datetime-local"
+                    value={reminderDate}
+                    onChange={(e) => setReminderDate(e.target.value)}
+                    className={`border-2 rounded-xl px-3 py-2.5 font-medium outline-none transition-colors text-sm ${
+                      theme === 'dark' ? 'bg-zinc-900 border-white/10 text-white focus:border-[var(--color-accent)]' : 'bg-zinc-50 border-zinc-200 text-zinc-900 focus:border-zinc-950'
+                    }`}
+                  />
+                  <button
+                    onClick={handleAddReminder}
+                    disabled={!reminderDate}
+                    className={`px-4 py-2 rounded-xl font-bold text-sm transition-all hover:brightness-110 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed ${
+                      theme === 'dark' ? 'bg-[var(--color-accent)] text-zinc-950' : 'bg-zinc-950 text-white'
+                    }`}
+                  >
+                    Criar
+                  </button>
+                </div>
+
+                {!lead.assignedToName && (
+                  <p className="text-[11px] text-zinc-500 -mt-1">O lembrete será atribuído a você, já que o lead ainda não tem atendente.</p>
+                )}
+
+                <div className="space-y-2">
+                  {leadReminders.length === 0 ? (
+                    <p className="text-zinc-500 text-sm italic py-2">Nenhum lembrete criado para este lead.</p>
+                  ) : (
+                    leadReminders.map((rem) => {
+                      const isOverdue = !rem.done && new Date(rem.remindAt).getTime() <= Date.now();
+                      return (
+                        <div
+                          key={rem.id}
+                          className={`flex items-center gap-3 p-3 rounded-xl border transition-colors ${
+                            rem.done
+                              ? theme === 'dark' ? 'bg-white/5 border-white/5 opacity-50' : 'bg-zinc-50 border-zinc-100 opacity-50'
+                              : isOverdue
+                                ? 'bg-red-500/10 border-red-500/20'
+                                : theme === 'dark' ? 'bg-white/5 border-white/5' : 'bg-zinc-50 border-zinc-100'
+                          }`}
+                        >
+                          <button
+                            onClick={() => !rem.done && markDone(rem.id)}
+                            disabled={rem.done}
+                            title={rem.done ? 'Concluído' : 'Marcar como concluído'}
+                            className={`w-6 h-6 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors ${
+                              rem.done
+                                ? 'bg-green-500 border-green-500 text-white'
+                                : 'border-zinc-400 hover:border-[var(--color-accent)] text-transparent hover:text-[var(--color-accent)]'
+                            }`}
+                          >
+                            <Check size={14} weight="bold" />
+                          </button>
+                          <div className="flex-1 min-w-0">
+                            <p className={`text-sm font-semibold truncate ${rem.done ? 'line-through' : ''} ${theme === 'dark' ? 'text-zinc-200' : 'text-zinc-800'}`}>
+                              {rem.message}
+                            </p>
+                            <p className={`text-[11px] ${isOverdue && !rem.done ? 'text-red-400 font-bold' : 'text-zinc-500'}`}>
+                              {formatReminderDate(rem.remindAt)} {isOverdue && !rem.done ? '· Atrasado' : ''}
+                            </p>
+                          </div>
+                          <button
+                            onClick={() => removeReminder(rem.id)}
+                            className="text-zinc-500 hover:text-red-500 p-1 transition-colors shrink-0"
+                            title="Excluir lembrete"
+                          >
+                            <Trash size={14} />
+                          </button>
+                        </div>
+                      );
+                    })
+                  )}
                 </div>
               </div>
 
