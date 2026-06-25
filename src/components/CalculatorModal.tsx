@@ -370,7 +370,7 @@ export function CalculatorModal({ isOpen, onClose, initialValorConta }: Calculat
                     className="flex items-center gap-2 px-6 py-3 rounded-xl bg-[var(--color-accent)] text-zinc-950 font-bold disabled:opacity-40 disabled:cursor-not-allowed hover:brightness-105 transition-all ml-auto shadow-lg"
                   >
                     <Lightning size={18} weight="fill" />
-                    Ver minha simulação
+                    Ver simulação completa
                   </button>
                 )}
               </div>
