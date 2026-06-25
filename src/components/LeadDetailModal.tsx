@@ -40,6 +40,10 @@ function buildWhatsAppMessage(lead: Lead) {
   return `https://wa.me/55${lead.whatsapp}?text=${encodeURIComponent(msg)}`;
 }
 
+function buildWhatsAppWebUrl(lead: Lead) {
+  return `https://web.whatsapp.com/send?phone=55${lead.whatsapp}`;
+}
+
 export function LeadDetailModal({ leadId, onClose }: LeadDetailModalProps) {
   const { leads, updateLead, updateLeadStatus, removeLead, addNote, removeNote, claimLead, releaseLead } = useCrmStore();
   const lead = leads.find(l => l.id === leadId) || null;
@@ -270,19 +274,31 @@ export function LeadDetailModal({ leadId, onClose }: LeadDetailModalProps) {
                 ) : null}
               </div>
 
-              {/* Botão de WhatsApp com mensagem personalizada */}
-              <a
-                href={buildWhatsAppMessage(lead)}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="mt-4 flex items-center justify-center gap-2.5 w-full py-3 rounded-xl bg-green-500 hover:bg-green-600 text-white font-bold transition-colors"
-              >
-                <WhatsappLogo size={20} weight="fill" />
-                {lead.status === 'novo'
-                  ? 'Iniciar conversa com mensagem personalizada'
-                  : `Abrir WhatsApp — ${lead.whatsapp.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3')}`
-                }
-              </a>
+              {/* Botões de WhatsApp */}
+              <div className="mt-4 flex gap-2">
+                <a
+                  href={buildWhatsAppMessage(lead)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex-1 flex items-center justify-center gap-2.5 py-3 rounded-xl bg-green-500 hover:bg-green-600 text-white font-bold transition-colors"
+                >
+                  <WhatsappLogo size={20} weight="fill" />
+                  {lead.status === 'novo'
+                    ? 'Iniciar conversa com mensagem personalizada'
+                    : `Abrir WhatsApp — ${lead.whatsapp.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3')}`
+                  }
+                </a>
+                <a
+                  href={buildWhatsAppWebUrl(lead)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  title="Abrir conversa no WhatsApp Web"
+                  className="shrink-0 flex items-center justify-center gap-2 px-4 py-3 rounded-xl border-2 border-green-500 text-green-500 hover:bg-green-500/10 font-bold transition-colors"
+                >
+                  <WhatsappLogo size={18} weight="bold" />
+                  <span className="hidden sm:inline">Abrir conversa</span>
+                </a>
+              </div>
             </div>
 
             {/* Corpo com scroll */}
