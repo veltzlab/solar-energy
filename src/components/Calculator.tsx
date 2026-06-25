@@ -123,7 +123,7 @@ export function Calculator() {
                 </div>
                 <div>
                   <p className="font-bold text-zinc-950 text-lg">Sua simulação está pronta!</p>
-                  <p className="text-zinc-500 text-sm mt-1">Informe seu nome e WhatsApp para liberar os valores de economia e impacto ambiental.</p>
+                  <p className="text-zinc-500 text-sm mt-1">Veja agora quanto você pode economizar e o impacto ambiental do seu sistema solar.</p>
                 </div>
                 <button
                   onClick={() => openCalculator(bill)}
