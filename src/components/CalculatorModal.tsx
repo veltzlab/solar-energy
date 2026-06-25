@@ -320,7 +320,7 @@ export function CalculatorModal({ isOpen, onClose, initialValorConta }: Calculat
                     </div>
 
                     <a
-                      href={`https://wa.me/5500000000000?text=Olá! Fiz a simulação no site e gostaria de receber minha proposta personalizada. Meu nome é ${encodeURIComponent(nome)}.`}
+                      href={`https://wa.me/5500000000000?text=${encodeURIComponent(`Olá! Fiz a simulação no site e gostaria de receber minha proposta personalizada. Meu nome é ${nome}.`)}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="w-full flex items-center justify-center gap-3 py-4 rounded-2xl bg-green-500 hover:bg-green-600 text-white font-bold text-lg transition-colors"
