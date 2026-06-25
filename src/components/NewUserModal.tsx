@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { X, UserPlus, Crown, Headset, Newspaper, Check } from '@phosphor-icons/react';
+import { X, UserPlus, Crown, Headset, HardHat, Newspaper, Check } from '@phosphor-icons/react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuthStore, DEFAULT_PASSWORD } from '../store/useAuthStore';
 import type { UserRole } from '../store/useAuthStore';
@@ -8,6 +8,23 @@ interface NewUserModalProps {
   isOpen: boolean;
   onClose: () => void;
 }
+
+const ROLE_CONFIG: Record<UserRole, {
+  label: string; desc: string; Icon: typeof Crown; avatarColor: string; badgeClass: string;
+}> = {
+  admin: {
+    label: 'Admin', desc: 'Acesso total', Icon: Crown,
+    avatarColor: 'bg-blue-500', badgeClass: 'bg-blue-500/20 text-blue-400',
+  },
+  vendedor: {
+    label: 'Vendedor', desc: 'Acesso ao CRM', Icon: Headset,
+    avatarColor: 'bg-[var(--color-accent)]', badgeClass: 'bg-[var(--color-accent)]/20 text-[var(--color-accent)]',
+  },
+  tecnico: {
+    label: 'Equipe Técnica', desc: 'Acesso ao CRM', Icon: HardHat,
+    avatarColor: 'bg-purple-500', badgeClass: 'bg-purple-500/20 text-purple-400',
+  },
+};
 
 function getInitials(name: string): string {
   const parts = name.trim().split(/\s+/).filter(Boolean);
@@ -52,7 +69,8 @@ export function NewUserModal({ isOpen, onClose }: NewUserModalProps) {
     }
   };
 
-  const avatarColor = role === 'admin' ? 'bg-blue-500' : 'bg-[var(--color-accent)]';
+  const avatarColor = ROLE_CONFIG[role].avatarColor;
+  const HeaderRoleIcon = ROLE_CONFIG[role].Icon;
 
   return (
     <AnimatePresence>
@@ -98,11 +116,9 @@ export function NewUserModal({ isOpen, onClose }: NewUserModalProps) {
                   <h2 className="text-white font-black text-xl tracking-tight truncate">
                     {name.trim() || 'Nome do usuário'}
                   </h2>
-                  <span className={`inline-flex items-center gap-1 mt-1.5 text-[10px] font-bold uppercase px-2 py-0.5 rounded-md ${
-                    role === 'admin' ? 'bg-blue-500/20 text-blue-400' : 'bg-[var(--color-accent)]/20 text-[var(--color-accent)]'
-                  }`}>
-                    {role === 'admin' ? <Crown size={11} weight="fill" /> : <Headset size={11} weight="fill" />}
-                    {role === 'admin' ? 'Administrador' : 'Vendedor'}
+                  <span className={`inline-flex items-center gap-1 mt-1.5 text-[10px] font-bold uppercase px-2 py-0.5 rounded-md ${ROLE_CONFIG[role].badgeClass}`}>
+                    <HeaderRoleIcon size={11} weight="fill" />
+                    {ROLE_CONFIG[role].label}
                   </span>
                 </div>
               </div>
@@ -140,40 +156,41 @@ export function NewUserModal({ isOpen, onClose }: NewUserModalProps) {
 
               <div>
                 <label className="block text-xs font-bold text-zinc-500 uppercase tracking-wider mb-2">Permissão</label>
-                <div className="grid grid-cols-2 gap-3">
-                  {([
-                    { value: 'vendedor' as UserRole, label: 'Vendedor', desc: 'Acesso ao CRM', icon: <Headset size={20} weight="fill" /> },
-                    { value: 'admin' as UserRole, label: 'Admin', desc: 'Acesso total', icon: <Crown size={20} weight="fill" /> },
-                  ]).map((opt) => (
-                    <button
-                      key={opt.value}
-                      type="button"
-                      onClick={() => setRole(opt.value)}
-                      className={`relative p-4 rounded-2xl border-2 text-left transition-all ${
-                        role === opt.value
-                          ? theme === 'dark'
-                            ? 'border-[var(--color-accent)] bg-[var(--color-accent)]/10'
-                            : 'border-zinc-950 bg-zinc-50'
-                          : theme === 'dark'
-                            ? 'border-white/10 hover:border-white/20'
-                            : 'border-zinc-200 hover:border-zinc-300'
-                      }`}
-                    >
-                      {role === opt.value && (
-                        <div className="absolute top-2 right-2 w-5 h-5 rounded-full bg-[var(--color-accent)] flex items-center justify-center">
-                          <Check size={12} weight="bold" className="text-zinc-950" />
-                        </div>
-                      )}
-                      <div className={role === opt.value ? 'text-[var(--color-accent)]' : 'text-zinc-500'}>{opt.icon}</div>
-                      <p className={`font-bold text-sm mt-2 ${theme === 'dark' ? 'text-white' : 'text-zinc-900'}`}>{opt.label}</p>
-                      <p className="text-[11px] text-zinc-500">{opt.desc}</p>
-                    </button>
-                  ))}
+                <div className="grid grid-cols-3 gap-2">
+                  {(Object.keys(ROLE_CONFIG) as UserRole[]).map((value) => {
+                    const opt = ROLE_CONFIG[value];
+                    const OptIcon = opt.Icon;
+                    return (
+                      <button
+                        key={value}
+                        type="button"
+                        onClick={() => setRole(value)}
+                        className={`relative p-3 rounded-2xl border-2 text-left transition-all ${
+                          role === value
+                            ? theme === 'dark'
+                              ? 'border-[var(--color-accent)] bg-[var(--color-accent)]/10'
+                              : 'border-zinc-950 bg-zinc-50'
+                            : theme === 'dark'
+                              ? 'border-white/10 hover:border-white/20'
+                              : 'border-zinc-200 hover:border-zinc-300'
+                        }`}
+                      >
+                        {role === value && (
+                          <div className="absolute top-1.5 right-1.5 w-4 h-4 rounded-full bg-[var(--color-accent)] flex items-center justify-center">
+                            <Check size={10} weight="bold" className="text-zinc-950" />
+                          </div>
+                        )}
+                        <div className={role === value ? 'text-[var(--color-accent)]' : 'text-zinc-500'}><OptIcon size={18} weight="fill" /></div>
+                        <p className={`font-bold text-xs mt-2 leading-tight ${theme === 'dark' ? 'text-white' : 'text-zinc-900'}`}>{opt.label}</p>
+                        <p className="text-[10px] text-zinc-500 leading-tight">{opt.desc}</p>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
 
               <AnimatePresence>
-                {role === 'vendedor' && (
+                {role !== 'admin' && (
                   <motion.label
                     initial={{ opacity: 0, height: 0 }}
                     animate={{ opacity: 1, height: 'auto' }}

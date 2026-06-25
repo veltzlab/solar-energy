@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect, memo, lazy, Suspense } from 'react';
 import { useCrmStore } from '../store/useCrmStore';
 import type { Lead, LeadStatus } from '../store/useCrmStore';
 import { useAuthStore } from '../store/useAuthStore';
+import type { UserRole } from '../store/useAuthStore';
 import { useNotificationStore } from '../store/useNotificationStore';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import type { DropResult } from '@hello-pangea/dnd';
@@ -22,6 +23,12 @@ const COLUMNS: { id: LeadStatus; label: string; color: string }[] = [
   { id: 'proposta',    label: 'Proposta',         color: 'bg-orange-500' },
   { id: 'fechado',     label: 'Fechado ✓',        color: 'bg-green-500' },
 ];
+
+const ROLE_BADGE: Record<UserRole, { label: string; className: string }> = {
+  admin: { label: 'admin', className: 'bg-blue-500/20 text-blue-400' },
+  vendedor: { label: 'vendedor', className: 'bg-zinc-500/20 text-zinc-400' },
+  tecnico: { label: 'equipe técnica', className: 'bg-purple-500/20 text-purple-400' },
+};
 
 function formatCurrency(val: number) {
   return val.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 });
@@ -359,7 +366,7 @@ export function CrmDashboard() {
             <p className={`font-bold text-sm truncate ${theme === 'dark' ? 'text-white' : 'text-zinc-900'}`}>{user?.name || 'Usuário'}</p>
             <div className="flex items-center gap-1 mt-1">
               <ShieldCheck size={12} className={user?.role === 'admin' ? 'text-blue-400' : 'text-zinc-500'} />
-              <span className="text-[10px] text-zinc-400 uppercase font-medium">{user?.role || 'Vendedor'}</span>
+              <span className="text-[10px] text-zinc-400 uppercase font-medium">{user ? ROLE_BADGE[user.role].label : 'Vendedor'}</span>
             </div>
           </div>
           <button
@@ -749,8 +756,8 @@ export function CrmDashboard() {
                         <div>
                           <p className={`font-bold ${theme === 'dark' ? 'text-white' : 'text-zinc-900'}`}>{u.name}</p>
                           <p className="text-zinc-500 text-xs">{u.email}</p>
-                          <span className={`inline-block mt-1 text-[10px] font-bold uppercase px-2 py-0.5 rounded-md ${u.role === 'admin' ? 'bg-blue-500/20 text-blue-400' : 'bg-zinc-500/20 text-zinc-400'}`}>
-                            {u.role}
+                          <span className={`inline-block mt-1 text-[10px] font-bold uppercase px-2 py-0.5 rounded-md ${ROLE_BADGE[u.role].className}`}>
+                            {ROLE_BADGE[u.role].label}
                           </span>
                           {u.mustChangePassword && (
                             <span className="inline-block mt-1 ml-1.5 text-[10px] font-bold uppercase px-2 py-0.5 rounded-md bg-yellow-500/20 text-yellow-500">
@@ -768,7 +775,7 @@ export function CrmDashboard() {
                         </button>
                       )}
                     </div>
-                    {u.role === 'vendedor' && (
+                    {u.role !== 'admin' && (
                       <label className={`mt-4 flex items-center gap-3 p-2.5 rounded-lg cursor-pointer transition-colors ${theme === 'dark' ? 'hover:bg-white/5' : 'hover:bg-zinc-50'}`}>
                         <input
                           type="checkbox"
