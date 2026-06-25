@@ -265,7 +265,7 @@ export function CrmDashboard() {
     setNewUserPassword('');
     setNewUserCanManageBlog(false);
     if (success) {
-      alert('Usuário criado! Um email de confirmação foi enviado para ele ativar o acesso.');
+      alert('Usuário criado! O acesso já está liberado com o e-mail e senha cadastrados.');
     } else {
       alert('Erro ao criar usuário. O email já pode estar cadastrado.');
     }
