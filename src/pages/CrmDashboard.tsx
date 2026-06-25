@@ -277,7 +277,7 @@ export function CrmDashboard() {
   const economiaFechados = leads.filter((l) => l.status === 'fechado').reduce((acc, l) => acc + l.economiaProjetada, 0);
 
   return (
-    <div className={`min-h-screen font-sans flex transition-colors duration-300 ${theme === 'dark' ? 'bg-zinc-950 text-white' : 'bg-zinc-50 text-zinc-950'}`}>
+    <div className={`h-screen font-sans flex overflow-hidden transition-colors duration-300 ${theme === 'dark' ? 'bg-zinc-950 text-white' : 'bg-zinc-50 text-zinc-950'}`}>
       <LeadDetailModal leadId={selectedLeadId} onClose={() => setSelectedLeadId(null)} />
       <NewLeadModal 
         isOpen={isNewLeadModalOpen} 
@@ -544,15 +544,15 @@ export function CrmDashboard() {
               </div>
 
               {/* Kanban */}
-              <div className="flex-1 overflow-x-auto p-8 pt-0">
+              <div className="flex-1 overflow-x-auto overflow-y-hidden p-8 pt-0">
                 <div aria-live="polite" className="sr-only">{announcement}</div>
                 <DragDropContext onDragEnd={onDragEnd}>
-                  <div className="flex gap-6 min-w-max">
+                  <div className="flex gap-6 min-w-max h-full">
                     {COLUMNS.map((col) => {
                       const colLeads = filteredLeads.filter(l => l.status === col.id);
                       return (
-                        <div key={col.id} className="w-[320px] flex flex-col shrink-0">
-                          <div className="flex items-center justify-between mb-4 px-2">
+                        <div key={col.id} className="w-[320px] flex flex-col shrink-0 h-full">
+                          <div className="flex items-center justify-between mb-4 px-2 shrink-0">
                             <div className="flex items-center gap-2">
                               <div className={`w-2 h-2 rounded-full ${col.color}`} />
                               <h3 className="font-bold text-sm uppercase tracking-widest text-zinc-400">{col.label}</h3>
@@ -560,7 +560,7 @@ export function CrmDashboard() {
                                 {colLeads.length}
                               </span>
                             </div>
-                            <button 
+                            <button
                               onClick={() => {
                                 setCreationStatus(col.id);
                                 setIsNewLeadModalOpen(true);
@@ -576,8 +576,8 @@ export function CrmDashboard() {
                               <div
                                 ref={provided.innerRef}
                                 {...provided.droppableProps}
-                                className={`flex-1 rounded-3xl p-3 transition-all min-h-[500px] ${
-                                  snapshot.isDraggingOver 
+                                className={`flex-1 min-h-0 overflow-y-auto rounded-3xl p-3 transition-all ${
+                                  snapshot.isDraggingOver
                                     ? theme === 'dark' ? 'bg-white/10 ring-2 ring-[var(--color-accent)]/20' : 'bg-zinc-100 ring-2 ring-[var(--color-accent)]/20'
                                     : theme === 'dark' ? 'bg-white/5 border border-dashed border-white/5' : 'bg-zinc-100/50 border border-dashed border-zinc-200'
                                 }`}
