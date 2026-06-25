@@ -1,3 +1,3 @@
-export function openCalculator() {
-  document.dispatchEvent(new CustomEvent('open-calculator'));
+export function openCalculator(valorConta?: number) {
+  document.dispatchEvent(new CustomEvent('open-calculator', { detail: { valorConta } }));
 }

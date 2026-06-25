@@ -2,15 +2,17 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { CurrencyDollar, Lightning, ShieldCheck, Tree } from '@phosphor-icons/react';
 import { openCalculator } from '../lib/openCalculator';
+import { calcularSistema } from '../utils/solarCalculations';
 
 export function Calculator() {
   const [bill, setBill] = useState<number>(300);
 
-  // Simple calculation logic
-  const savingsPerMonth = bill * 0.95; // 95% savings
-  const savingsYear = savingsPerMonth * 12;
+  // Mesma fórmula usada em "Simular Economia", para manter os números consistentes
+  // entre os dois blocos e permitir o envio do lead pro CRM com os mesmos parâmetros
+  const resultado = calcularSistema(bill);
+  const savingsYear = resultado.economiaAnual;
   const savings20Years = savingsYear * 20;
-  const treesSaved = Math.max(1, Math.floor(savingsYear / 150)); // rough estimate
+  const treesSaved = Math.max(1, Math.floor(savingsYear / 150)); // estimativa ambiental
 
   return (
     <section id="calculadora" className="py-24 px-4 md:px-8 bg-zinc-50 relative overflow-hidden">
@@ -109,7 +111,7 @@ export function Calculator() {
                 <p className="text-zinc-900/80 mt-3 font-medium">Equivalente plantado por ano</p>
               </div>
               <div className="w-full md:w-auto">
-                <button onClick={openCalculator} className="w-full md:w-auto px-10 py-5 bg-zinc-950 text-white rounded-full font-semibold hover:bg-zinc-800 transition-all active:scale-[0.98] shadow-lg flex items-center justify-center gap-2">
+                <button onClick={() => openCalculator(bill)} className="w-full md:w-auto px-10 py-5 bg-zinc-950 text-white rounded-full font-semibold hover:bg-zinc-800 transition-all active:scale-[0.98] shadow-lg flex items-center justify-center gap-2">
                   Receber Orçamento
                 </button>
               </div>

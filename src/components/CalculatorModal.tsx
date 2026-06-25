@@ -6,13 +6,14 @@ import { motion, AnimatePresence } from 'framer-motion';
 interface CalculatorModalProps {
   isOpen: boolean;
   onClose: () => void;
+  initialValorConta?: number;
 }
 
 type Step = 1 | 2 | 3;
 
 import { calcularSistema } from '../utils/solarCalculations';
 
-export function CalculatorModal({ isOpen, onClose }: CalculatorModalProps) {
+export function CalculatorModal({ isOpen, onClose, initialValorConta }: CalculatorModalProps) {
   const [step, setStep] = useState<Step>(1);
   const [valorConta, setValorConta] = useState(500);
   const [nome, setNome] = useState('');
@@ -26,6 +27,15 @@ export function CalculatorModal({ isOpen, onClose }: CalculatorModalProps) {
     document.addEventListener('keydown', handler);
     return () => document.removeEventListener('keydown', handler);
   }, [isOpen, onClose]);
+
+  // Ao abrir já com um valor de conta definido (ex: calculadora "Descubra o quanto você vai economizar"),
+  // usa esse valor e vai direto para a etapa de contato
+  useEffect(() => {
+    if (isOpen && initialValorConta) {
+      setValorConta(initialValorConta);
+      setStep(2);
+    }
+  }, [isOpen, initialValorConta]);
 
   // Reseta ao fechar
   useEffect(() => {

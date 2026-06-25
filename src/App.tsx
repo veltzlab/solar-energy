@@ -29,10 +29,15 @@ function ProtectedCrm() {
 function LandingPage() {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isCalculatorOpen, setIsCalculatorOpen] = useState(false);
+  const [calculatorInitialValor, setCalculatorInitialValor] = useState<number | undefined>(undefined);
 
   useEffect(() => {
     const handleOpenSearch = () => setIsSearchOpen(true);
-    const handleOpenCalc = () => setIsCalculatorOpen(true);
+    const handleOpenCalc = (e: Event) => {
+      const detail = (e as CustomEvent<{ valorConta?: number }>).detail;
+      setCalculatorInitialValor(detail?.valorConta);
+      setIsCalculatorOpen(true);
+    };
     document.addEventListener('open-search', handleOpenSearch);
     document.addEventListener('open-calculator', handleOpenCalc);
     return () => {
@@ -40,6 +45,12 @@ function LandingPage() {
       document.removeEventListener('open-calculator', handleOpenCalc);
     };
   }, []);
+
+  // Abre o modal do zero (passo 1), limpando qualquer valor herdado da calculadora inline
+  const openCalculatorFromScratch = () => {
+    setCalculatorInitialValor(undefined);
+    setIsCalculatorOpen(true);
+  };
 
   return (
     <div className="bg-white min-h-screen font-sans selection:bg-[var(--color-accent-light)] selection:text-zinc-950">
@@ -50,13 +61,17 @@ function LandingPage() {
         Pular para conteúdo
       </a>
       <Navbar
-        onOpenCalculator={() => setIsCalculatorOpen(true)}
+        onOpenCalculator={openCalculatorFromScratch}
       />
       <SearchPalette isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
-      <CalculatorModal isOpen={isCalculatorOpen} onClose={() => setIsCalculatorOpen(false)} />
+      <CalculatorModal
+        isOpen={isCalculatorOpen}
+        onClose={() => setIsCalculatorOpen(false)}
+        initialValorConta={calculatorInitialValor}
+      />
 
       <main id="main-content">
-        <Hero onOpenCalculator={() => setIsCalculatorOpen(true)} />
+        <Hero onOpenCalculator={openCalculatorFromScratch} />
         <Benefits />
         <Calculator />
         <Suspense fallback={<div className="h-64 flex items-center justify-center"><span className="text-zinc-400">Carregando...</span></div>}>
