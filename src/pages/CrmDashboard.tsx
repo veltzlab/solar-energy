@@ -1,14 +1,14 @@
 import { useState, useMemo, useEffect, memo, lazy, Suspense } from 'react';
 import { useCrmStore } from '../store/useCrmStore';
 import type { Lead, LeadStatus } from '../store/useCrmStore';
-import { useAuthStore, DEFAULT_PASSWORD } from '../store/useAuthStore';
+import { useAuthStore } from '../store/useAuthStore';
 import { useNotificationStore } from '../store/useNotificationStore';
-import type { UserRole } from '../store/useAuthStore';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import type { DropResult } from '@hello-pangea/dnd';
 import { WhatsappLogo, User, CurrencyDollar, Fire, Drop, Snowflake, SunDim, MagnifyingGlass, X, Funnel, Users, Plus, Trash, ShieldCheck, SignOut, House, Moon, Sun, AddressBook, Headset, Newspaper } from '@phosphor-icons/react';
 import { LeadDetailModal } from '../components/LeadDetailModal';
 import { NewLeadModal } from '../components/NewLeadModal';
+import { NewUserModal } from '../components/NewUserModal';
 import { ErrorBoundary } from '../components/ErrorBoundary';
 import { NotificationBell } from '../components/NotificationBell';
 import { isNotificationSupported, getNotificationPermission, requestNotificationPermission } from '../lib/browserNotifications';
@@ -176,7 +176,7 @@ type FilterPeriodo = 'todos' | 'hoje' | 'semana' | 'mes';
 
 export function CrmDashboard() {
   const { leads, updateLeadStatus, removeLead, fetchLeads } = useCrmStore();
-  const { user, logout, users, addUser, removeUser, setBlogAccess, theme, toggleTheme, fetchUsers } = useAuthStore();
+  const { user, logout, users, removeUser, setBlogAccess, theme, toggleTheme, fetchUsers } = useAuthStore();
   const removeForLeadReminders = useNotificationStore((s) => s.removeForLead);
   const [selectedLeadId, setSelectedLeadId] = useState<string | null>(null);
   const [isNewLeadModalOpen, setIsNewLeadModalOpen] = useState(false);
@@ -205,11 +205,7 @@ export function CrmDashboard() {
     }
   }, []);
 
-  // Estados para novo usuário
-  const [newUserName, setNewUserName] = useState('');
-  const [newUserEmail, setNewUserEmail] = useState('');
-  const [newUserRole, setNewUserRole] = useState<UserRole>('vendedor');
-  const [newUserCanManageBlog, setNewUserCanManageBlog] = useState(false);
+  const [isNewUserModalOpen, setIsNewUserModalOpen] = useState(false);
 
   // No Dashboard (Kanban), vendedores só veem leads sem atendente ou que eles mesmos assumiram.
   // Admins veem todos. A aba Contatos usa `leads` diretamente, sem essa restrição.
@@ -264,25 +260,6 @@ export function CrmDashboard() {
     updateLeadStatus(result.draggableId, newStatus);
   };
 
-  const handleAddUser = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newUserName || !newUserEmail) return;
-    const success = await addUser({
-      name: newUserName,
-      email: newUserEmail,
-      role: newUserRole,
-      canManageBlog: newUserCanManageBlog,
-    });
-    setNewUserName('');
-    setNewUserEmail('');
-    setNewUserCanManageBlog(false);
-    if (success) {
-      alert(`Usuário criado! Senha inicial: "${DEFAULT_PASSWORD}". No primeiro acesso, ele(a) vai definir a própria senha.`);
-    } else {
-      alert('Erro ao criar usuário. O email já pode estar cadastrado.');
-    }
-  };
-
   const totalLeads = dashboardLeads.length;
   const totalEconomia = dashboardLeads.reduce((acc, l) => acc + l.economiaProjetada, 0);
   const totalFechados = dashboardLeads.filter((l) => l.status === 'fechado').length;
@@ -299,6 +276,7 @@ export function CrmDashboard() {
         }} 
         initialStatus={creationStatus}
       />
+      <NewUserModal isOpen={isNewUserModalOpen} onClose={() => setIsNewUserModalOpen(false)} />
 
       {/* Sidebar Simples */}
       <aside className={`w-64 border-r flex flex-col pt-6 shrink-0 h-screen sticky top-0 transition-colors duration-300 ${theme === 'dark' ? 'border-white/10 bg-zinc-950' : 'border-zinc-200 bg-white'}`}>
@@ -740,129 +718,69 @@ export function CrmDashboard() {
             </ErrorBoundary>
           ) : (
             <ErrorBoundary><div className="p-8 max-w-4xl h-full overflow-y-auto">
-              <div className="mb-10">
-                <h2 className="text-3xl font-black mb-2">Gestão de Usuários</h2>
-                <p className="text-zinc-500">Adicione ou remova membros da equipe com acesso ao CRM.</p>
+              <div className="mb-10 flex items-center justify-between flex-wrap gap-4">
+                <div>
+                  <h2 className="text-3xl font-black mb-2">Gestão de Usuários</h2>
+                  <p className="text-zinc-500">Adicione ou remova membros da equipe com acesso ao CRM.</p>
+                </div>
+                <button
+                  onClick={() => setIsNewUserModalOpen(true)}
+                  className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm transition-all shadow-lg hover:brightness-105 active:scale-95 ${
+                    theme === 'dark' ? 'bg-[var(--color-accent)] text-zinc-950 shadow-[var(--color-accent)]/20' : 'bg-zinc-950 text-white shadow-zinc-300'
+                  }`}
+                >
+                  <Plus size={18} weight="bold" />
+                  Novo Usuário
+                </button>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-                {/* Lista de Usuários */}
-                <div className="space-y-4">
-                  <h3 className="text-lg font-bold flex items-center gap-2 mb-6">
-                    <Users size={22} className="text-[var(--color-accent)]" />
-                    Membros Ativos
-                  </h3>
-                  {users?.map((u) => (
-                    <div key={u.email} className={`border rounded-2xl p-5 transition-colors ${theme === 'dark' ? 'bg-white/5 border-white/10' : 'bg-white border-zinc-200 shadow-sm'}`}>
-                      <div className="group flex items-center justify-between">
-                        <div className="flex items-center gap-4">
-                          <div className="w-12 h-12 rounded-full bg-[var(--color-accent)]/10 flex items-center justify-center">
-                            <User size={24} weight="fill" className="text-[var(--color-accent)]" />
-                          </div>
-                          <div>
-                            <p className={`font-bold ${theme === 'dark' ? 'text-white' : 'text-zinc-900'}`}>{u.name}</p>
-                            <p className="text-zinc-500 text-xs">{u.email}</p>
-                            <span className={`inline-block mt-1 text-[10px] font-bold uppercase px-2 py-0.5 rounded-md ${u.role === 'admin' ? 'bg-blue-500/20 text-blue-400' : 'bg-zinc-500/20 text-zinc-400'}`}>
-                              {u.role}
-                            </span>
-                            {u.mustChangePassword && (
-                              <span className="inline-block mt-1 ml-1.5 text-[10px] font-bold uppercase px-2 py-0.5 rounded-md bg-yellow-500/20 text-yellow-500">
-                                Aguardando 1º acesso
-                              </span>
-                            )}
-                          </div>
+              <h3 className="text-lg font-bold flex items-center gap-2 mb-6">
+                <Users size={22} className="text-[var(--color-accent)]" />
+                Membros Ativos
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {users?.map((u) => (
+                  <div key={u.email} className={`border rounded-2xl p-5 transition-colors ${theme === 'dark' ? 'bg-white/5 border-white/10' : 'bg-white border-zinc-200 shadow-sm'}`}>
+                    <div className="group flex items-center justify-between">
+                      <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 rounded-full bg-[var(--color-accent)]/10 flex items-center justify-center">
+                          <User size={24} weight="fill" className="text-[var(--color-accent)]" />
                         </div>
-                        {u.email !== user?.email && (
-                          <button
-                            onClick={() => removeUser(u.email)}
-                            className="p-2 text-zinc-600 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all"
-                          >
-                            <Trash size={20} />
-                          </button>
-                        )}
+                        <div>
+                          <p className={`font-bold ${theme === 'dark' ? 'text-white' : 'text-zinc-900'}`}>{u.name}</p>
+                          <p className="text-zinc-500 text-xs">{u.email}</p>
+                          <span className={`inline-block mt-1 text-[10px] font-bold uppercase px-2 py-0.5 rounded-md ${u.role === 'admin' ? 'bg-blue-500/20 text-blue-400' : 'bg-zinc-500/20 text-zinc-400'}`}>
+                            {u.role}
+                          </span>
+                          {u.mustChangePassword && (
+                            <span className="inline-block mt-1 ml-1.5 text-[10px] font-bold uppercase px-2 py-0.5 rounded-md bg-yellow-500/20 text-yellow-500">
+                              Aguardando 1º acesso
+                            </span>
+                          )}
+                        </div>
                       </div>
-                      {u.role === 'vendedor' && (
-                        <label className={`mt-4 flex items-center gap-3 p-2.5 rounded-lg cursor-pointer transition-colors ${theme === 'dark' ? 'hover:bg-white/5' : 'hover:bg-zinc-50'}`}>
-                          <input
-                            type="checkbox"
-                            checked={!!u.canManageBlog}
-                            onChange={(e) => setBlogAccess(u.email, e.target.checked)}
-                            className="w-4 h-4 accent-[var(--color-accent)]"
-                          />
-                          <span className={`text-xs font-semibold ${theme === 'dark' ? 'text-zinc-300' : 'text-zinc-700'}`}>Pode gerenciar o blog</span>
-                        </label>
+                      {u.email !== user?.email && (
+                        <button
+                          onClick={() => removeUser(u.email)}
+                          className="p-2 text-zinc-600 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all"
+                        >
+                          <Trash size={20} />
+                        </button>
                       )}
                     </div>
-                  ))}
-                </div>
-
-                {/* Formulário Novo Usuário */}
-                <div className={`border rounded-3xl p-8 h-fit transition-colors ${theme === 'dark' ? 'bg-white/5 border-white/10' : 'bg-white border-zinc-200 shadow-sm'}`}>
-                  <h3 className={`text-lg font-bold flex items-center gap-2 mb-6 ${theme === 'dark' ? 'text-white' : 'text-zinc-900'}`}>
-                    <Plus size={22} className="text-[var(--color-accent)]" />
-                    Novo Usuário
-                  </h3>
-                  <form onSubmit={handleAddUser} className="space-y-4">
-                    <div>
-                      <label className="text-xs font-bold text-zinc-500 uppercase mb-2 block">Nome Completo</label>
-                      <input 
-                        required
-                        value={newUserName}
-                        onChange={e => setNewUserName(e.target.value)}
-                        className={`w-full border rounded-xl px-4 py-3 text-sm outline-none focus:border-[var(--color-accent)] transition-all ${
-                          theme === 'dark' ? 'bg-zinc-950 border-white/10 text-white' : 'bg-zinc-50 border-zinc-200 text-zinc-900'
-                        }`}
-                        placeholder="Nome do membro"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-xs font-bold text-zinc-500 uppercase mb-2 block">Email de Acesso</label>
-                      <input 
-                        required
-                        type="email"
-                        value={newUserEmail}
-                        onChange={e => setNewUserEmail(e.target.value)}
-                        className={`w-full border rounded-xl px-4 py-3 text-sm outline-none focus:border-[var(--color-accent)] transition-all ${
-                          theme === 'dark' ? 'bg-zinc-950 border-white/10 text-white' : 'bg-zinc-50 border-zinc-200 text-zinc-900'
-                        }`}
-                        placeholder="email@empresa.com"
-                      />
-                    </div>
-                    <div className={`p-3 rounded-xl text-xs ${theme === 'dark' ? 'bg-white/5 text-zinc-400' : 'bg-zinc-50 text-zinc-500'}`}>
-                      O novo usuário receberá a senha padrão <strong className={theme === 'dark' ? 'text-white' : 'text-zinc-900'}>{DEFAULT_PASSWORD}</strong> e vai definir a própria senha no primeiro acesso.
-                    </div>
-                    <div>
-                      <label className="text-xs font-bold text-zinc-500 uppercase mb-2 block">Permissão</label>
-                      <select 
-                        value={newUserRole}
-                        onChange={e => setNewUserRole(e.target.value as UserRole)}
-                        className={`w-full border rounded-xl px-4 py-3 text-sm outline-none focus:border-[var(--color-accent)] transition-all ${
-                          theme === 'dark' ? 'bg-zinc-950 border-white/10 text-white' : 'bg-zinc-50 border-zinc-200 text-zinc-900'
-                        }`}
-                      >
-                        <option value="vendedor">Vendedor (Apenas CRM)</option>
-                        <option value="admin">Administrador (Total)</option>
-                      </select>
-                    </div>
-                    {newUserRole === 'vendedor' && (
-                      <label className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-colors ${theme === 'dark' ? 'border-white/10 hover:bg-white/5' : 'border-zinc-200 hover:bg-zinc-50'}`}>
+                    {u.role === 'vendedor' && (
+                      <label className={`mt-4 flex items-center gap-3 p-2.5 rounded-lg cursor-pointer transition-colors ${theme === 'dark' ? 'hover:bg-white/5' : 'hover:bg-zinc-50'}`}>
                         <input
                           type="checkbox"
-                          checked={newUserCanManageBlog}
-                          onChange={(e) => setNewUserCanManageBlog(e.target.checked)}
+                          checked={!!u.canManageBlog}
+                          onChange={(e) => setBlogAccess(u.email, e.target.checked)}
                           className="w-4 h-4 accent-[var(--color-accent)]"
                         />
-                        <div>
-                          <p className={`text-sm font-bold ${theme === 'dark' ? 'text-white' : 'text-zinc-900'}`}>Permitir gerenciar blog</p>
-                          <p className="text-[11px] text-zinc-500">Libera acesso à aba Blog para publicar e editar artigos.</p>
-                        </div>
+                        <span className={`text-xs font-semibold ${theme === 'dark' ? 'text-zinc-300' : 'text-zinc-700'}`}>Pode gerenciar o blog</span>
                       </label>
                     )}
-                    <button className="w-full bg-[var(--color-accent)] text-zinc-950 font-bold py-4 rounded-xl mt-4 hover:scale-[1.02] active:scale-[0.98] transition-all">
-                      Criar Acesso
-                    </button>
-                  </form>
-                </div>
+                  </div>
+                ))}
               </div>
             </div></ErrorBoundary>
           )}
