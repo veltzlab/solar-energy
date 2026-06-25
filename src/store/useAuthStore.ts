@@ -82,12 +82,21 @@ export const useAuthStore = create<AuthStore>()(
     }),
     {
       name: 'solar-crm-auth-v2',
+      version: 1,
       partialize: (s) => ({
         theme: s.theme,
         users: s.users,
         isAuthenticated: s.isAuthenticated,
         user: s.user,
       }),
+      // Corrige navegadores com `users` vazio/corrompido salvo de versões anteriores
+      migrate: (persistedState, version) => {
+        const state = persistedState as { theme?: 'dark' | 'light'; users?: ProfileUser[] };
+        if (version < 1 || !state.users || state.users.length === 0) {
+          return { theme: state.theme ?? 'dark', users: INITIAL_USERS, isAuthenticated: false, user: null };
+        }
+        return { theme: state.theme ?? 'dark', users: state.users, isAuthenticated: false, user: null };
+      },
     }
   )
 );
