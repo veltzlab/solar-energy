@@ -17,19 +17,27 @@ export interface ProfileUser {
   role: UserRole;
   password?: string;
   canManageBlog?: boolean;
+  mustChangePassword?: boolean;
 }
+
+export type LoginResult = 'invalid' | 'must-change-password' | 'success';
+
+export const DEFAULT_PASSWORD = 'solar123';
 
 interface AuthStore {
   isAuthenticated: boolean;
   user: User | null;
   users: ProfileUser[];
+  pendingUser: ProfileUser | null;
   theme: 'dark' | 'light';
   toggleTheme: () => void;
   init: () => Promise<void>;
-  login: (email: string, password: string) => Promise<boolean>;
+  login: (email: string, password: string) => Promise<LoginResult>;
+  completeFirstLogin: (newPassword: string) => Promise<boolean>;
+  cancelFirstLogin: () => void;
   logout: () => Promise<void>;
   fetchUsers: () => Promise<void>;
-  addUser: (data: { name: string; email: string; password: string; role: UserRole; canManageBlog?: boolean }) => Promise<boolean>;
+  addUser: (data: { name: string; email: string; role: UserRole; canManageBlog?: boolean }) => Promise<boolean>;
   removeUser: (email: string) => Promise<void>;
   setBlogAccess: (email: string, allowed: boolean) => void;
 }
@@ -45,6 +53,7 @@ export const useAuthStore = create<AuthStore>()(
       isAuthenticated: false,
       user: null,
       users: INITIAL_USERS,
+      pendingUser: null,
       theme: 'dark',
 
       toggleTheme: () => set((s) => ({ theme: s.theme === 'dark' ? 'light' : 'dark' })),
@@ -57,12 +66,32 @@ export const useAuthStore = create<AuthStore>()(
         const found = get().users.find(
           (u) => u.email.toLowerCase() === email.toLowerCase() && u.password === password
         );
-        if (!found) return false;
+        if (!found) return 'invalid';
+        if (found.mustChangePassword) {
+          set({ pendingUser: found });
+          return 'must-change-password';
+        }
         set({
           isAuthenticated: true,
           user: { email: found.email, name: found.name, role: found.role, canManageBlog: found.canManageBlog ?? false },
         });
+        return 'success';
+      },
+
+      completeFirstLogin: async (newPassword) => {
+        const pending = get().pendingUser;
+        if (!pending) return false;
+        set((s) => ({
+          users: s.users.map((u) => u.email === pending.email ? { ...u, password: newPassword, mustChangePassword: false } : u),
+          isAuthenticated: true,
+          user: { email: pending.email, name: pending.name, role: pending.role, canManageBlog: pending.canManageBlog ?? false },
+          pendingUser: null,
+        }));
         return true;
+      },
+
+      cancelFirstLogin: () => {
+        set({ pendingUser: null });
       },
 
       logout: async () => {
@@ -73,10 +102,18 @@ export const useAuthStore = create<AuthStore>()(
         // Já carregado do estado local
       },
 
-      addUser: async ({ name, email, password, role, canManageBlog }) => {
+      addUser: async ({ name, email, role, canManageBlog }) => {
         const exists = get().users.find((u) => u.email.toLowerCase() === email.toLowerCase());
         if (exists) return false;
-        const newUser: ProfileUser = { id: Date.now().toString(), email, name, role, password, canManageBlog };
+        const newUser: ProfileUser = {
+          id: Date.now().toString(),
+          email,
+          name,
+          role,
+          password: DEFAULT_PASSWORD,
+          canManageBlog,
+          mustChangePassword: true,
+        };
         set({ users: [...get().users, newUser] });
         return true;
       },

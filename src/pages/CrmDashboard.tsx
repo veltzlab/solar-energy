@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect, memo, lazy, Suspense } from 'react';
 import { useCrmStore } from '../store/useCrmStore';
 import type { Lead, LeadStatus } from '../store/useCrmStore';
-import { useAuthStore } from '../store/useAuthStore';
+import { useAuthStore, DEFAULT_PASSWORD } from '../store/useAuthStore';
 import { useNotificationStore } from '../store/useNotificationStore';
 import type { UserRole } from '../store/useAuthStore';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
@@ -208,7 +208,6 @@ export function CrmDashboard() {
   // Estados para novo usuário
   const [newUserName, setNewUserName] = useState('');
   const [newUserEmail, setNewUserEmail] = useState('');
-  const [newUserPassword, setNewUserPassword] = useState('');
   const [newUserRole, setNewUserRole] = useState<UserRole>('vendedor');
   const [newUserCanManageBlog, setNewUserCanManageBlog] = useState(false);
 
@@ -267,20 +266,18 @@ export function CrmDashboard() {
 
   const handleAddUser = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newUserName || !newUserEmail || !newUserPassword) return;
+    if (!newUserName || !newUserEmail) return;
     const success = await addUser({
       name: newUserName,
       email: newUserEmail,
-      password: newUserPassword,
       role: newUserRole,
       canManageBlog: newUserCanManageBlog,
     });
     setNewUserName('');
     setNewUserEmail('');
-    setNewUserPassword('');
     setNewUserCanManageBlog(false);
     if (success) {
-      alert('Usuário criado! O acesso já está liberado com o e-mail e senha cadastrados.');
+      alert(`Usuário criado! Senha inicial: "${DEFAULT_PASSWORD}". No primeiro acesso, ele(a) vai definir a própria senha.`);
     } else {
       alert('Erro ao criar usuário. O email já pode estar cadastrado.');
     }
@@ -768,6 +765,11 @@ export function CrmDashboard() {
                             <span className={`inline-block mt-1 text-[10px] font-bold uppercase px-2 py-0.5 rounded-md ${u.role === 'admin' ? 'bg-blue-500/20 text-blue-400' : 'bg-zinc-500/20 text-zinc-400'}`}>
                               {u.role}
                             </span>
+                            {u.mustChangePassword && (
+                              <span className="inline-block mt-1 ml-1.5 text-[10px] font-bold uppercase px-2 py-0.5 rounded-md bg-yellow-500/20 text-yellow-500">
+                                Aguardando 1º acesso
+                              </span>
+                            )}
                           </div>
                         </div>
                         {u.email !== user?.email && (
@@ -826,18 +828,8 @@ export function CrmDashboard() {
                         placeholder="email@empresa.com"
                       />
                     </div>
-                    <div>
-                      <label className="text-xs font-bold text-zinc-500 uppercase mb-2 block">Senha Provisória</label>
-                      <input 
-                        required
-                        type="password"
-                        value={newUserPassword}
-                        onChange={e => setNewUserPassword(e.target.value)}
-                        className={`w-full border rounded-xl px-4 py-3 text-sm outline-none focus:border-[var(--color-accent)] transition-all ${
-                          theme === 'dark' ? 'bg-zinc-950 border-white/10 text-white' : 'bg-zinc-50 border-zinc-200 text-zinc-900'
-                        }`}
-                        placeholder="••••••••"
-                      />
+                    <div className={`p-3 rounded-xl text-xs ${theme === 'dark' ? 'bg-white/5 text-zinc-400' : 'bg-zinc-50 text-zinc-500'}`}>
+                      O novo usuário receberá a senha padrão <strong className={theme === 'dark' ? 'text-white' : 'text-zinc-900'}>{DEFAULT_PASSWORD}</strong> e vai definir a própria senha no primeiro acesso.
                     </div>
                     <div>
                       <label className="text-xs font-bold text-zinc-500 uppercase mb-2 block">Permissão</label>
