@@ -11,45 +11,50 @@ interface ServiceCity {
   lat: number;
   lng: number;
   projetos: number;
+  principal?: boolean;
 }
 
 const CIDADES: ServiceCity[] = [
-  { id: 1, cidade: "São Paulo", estado: "SP", lat: -23.5505, lng: -46.6333, projetos: 312 },
-  { id: 2, cidade: "Campinas", estado: "SP", lat: -22.9099, lng: -47.0626, projetos: 148 },
-  { id: 3, cidade: "Ribeirão Preto", estado: "SP", lat: -21.1775, lng: -47.8208, projetos: 96 },
-  { id: 4, cidade: "Sorocaba", estado: "SP", lat: -23.5015, lng: -47.4526, projetos: 74 },
-  { id: 5, cidade: "Uberlândia", estado: "MG", lat: -18.9186, lng: -48.2772, projetos: 61 },
-  { id: 6, cidade: "Belo Horizonte", estado: "MG", lat: -19.9167, lng: -43.9345, projetos: 130 },
-  { id: 7, cidade: "Rio de Janeiro", estado: "RJ", lat: -22.9068, lng: -43.1729, projetos: 187 },
-  { id: 8, cidade: "Curitiba", estado: "PR", lat: -25.4284, lng: -49.2733, projetos: 88 },
+  { id: 1, cidade: "Governador Valadares", estado: "MG", lat: -18.8545, lng: -41.9495, projetos: 284, principal: true },
+  { id: 2, cidade: "Ipatinga", estado: "MG", lat: -19.4683, lng: -42.5366, projetos: 132 },
+  { id: 3, cidade: "Coronel Fabriciano", estado: "MG", lat: -19.5186, lng: -42.6286, projetos: 78 },
+  { id: 4, cidade: "Caratinga", estado: "MG", lat: -19.7898, lng: -42.1383, projetos: 65 },
+  { id: 5, cidade: "Teófilo Otoni", estado: "MG", lat: -17.8588, lng: -41.5052, projetos: 58 },
+  { id: 6, cidade: "Resplendor", estado: "MG", lat: -19.3208, lng: -41.2486, projetos: 34 },
+  { id: 7, cidade: "Aimorés", estado: "MG", lat: -19.4953, lng: -41.0661, projetos: 29 },
 ];
 
-// Ícone customizado em formato de pino dourado com o logo da marca
-function createBrandIcon() {
+// Ícone customizado em formato de pino dourado com o logo da marca.
+// A cidade principal (sede) recebe um pino maior com anel de destaque.
+function createBrandIcon(principal = false) {
+  const size = principal ? 46 : 32;
+  const dotSize = principal ? 18 : 13;
   return L.divIcon({
     className: "",
     html: `
       <div style="
-        width: 34px; height: 34px;
+        width: ${size}px; height: ${size}px;
         background: #e8b208;
-        border: 3px solid #09090b;
+        border: ${principal ? 4 : 3}px solid #09090b;
         border-radius: 9999px 9999px 9999px 2px;
         transform: rotate(45deg);
-        box-shadow: 0 4px 12px rgba(0,0,0,0.35);
+        box-shadow: 0 4px 14px rgba(0,0,0,0.4)${principal ? ', 0 0 0 6px rgba(232,178,8,0.25)' : ''};
         display: flex; align-items: center; justify-content: center;
       ">
-        <div style="transform: rotate(-45deg); width: 14px; height: 14px; border-radius: 9999px; background: #09090b;"></div>
+        <div style="transform: rotate(-45deg); width: ${dotSize}px; height: ${dotSize}px; border-radius: 9999px; background: #09090b;"></div>
       </div>
     `,
-    iconSize: [34, 34],
-    iconAnchor: [17, 30],
-    popupAnchor: [0, -28],
+    iconSize: [size, size],
+    iconAnchor: [size / 2, size - 4],
+    popupAnchor: [0, -size + 6],
   });
 }
 
 export function ServiceMap() {
-  const icon = useMemo(() => createBrandIcon(), []);
+  const icon = useMemo(() => createBrandIcon(false), []);
+  const principalIcon = useMemo(() => createBrandIcon(true), []);
   const totalProjetos = CIDADES.reduce((acc, c) => acc + c.projetos, 0);
+  const principal = CIDADES.find((c) => c.principal);
 
   return (
     <section className="py-24 bg-zinc-50 relative overflow-hidden" id="onde-atendemos">
@@ -68,8 +73,8 @@ export function ServiceMap() {
           {/* Mapa */}
           <div className="rounded-[2rem] overflow-hidden border border-zinc-200 shadow-[0_20px_50px_rgba(0,0,0,0.06)] h-[480px] relative">
             <MapContainer
-              center={[-22.5, -46.5]}
-              zoom={6}
+              center={principal ? [principal.lat, principal.lng] : [-19, -42]}
+              zoom={9}
               scrollWheelZoom={false}
               className="w-full h-full z-0"
             >
@@ -78,9 +83,12 @@ export function ServiceMap() {
                 url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
               />
               {CIDADES.map((c) => (
-                <Marker key={c.id} position={[c.lat, c.lng]} icon={icon}>
+                <Marker key={c.id} position={[c.lat, c.lng]} icon={c.principal ? principalIcon : icon}>
                   <Popup>
                     <div className="text-center font-sans">
+                      {c.principal && (
+                        <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--color-accent-dark)] m-0 mb-1">Sede</p>
+                      )}
                       <p className="font-bold text-zinc-900 m-0">{c.cidade} — {c.estado}</p>
                       <p className="text-xs text-zinc-500 m-0 mt-1">{c.projetos} projetos instalados</p>
                     </div>
@@ -99,15 +107,20 @@ export function ServiceMap() {
             <div className="space-y-1 overflow-y-auto max-h-[380px] pr-1">
               {CIDADES
                 .slice()
-                .sort((a, b) => b.projetos - a.projetos)
+                .sort((a, b) => (b.principal ? 1 : 0) - (a.principal ? 1 : 0) || b.projetos - a.projetos)
                 .map((c) => (
                   <div
                     key={c.id}
-                    className="flex items-center justify-between gap-3 py-2.5 px-3 rounded-xl hover:bg-zinc-50 transition-colors"
+                    className={`flex items-center justify-between gap-3 py-2.5 px-3 rounded-xl transition-colors ${
+                      c.principal ? 'bg-[var(--color-accent)]/10' : 'hover:bg-zinc-50'
+                    }`}
                   >
                     <div className="flex items-center gap-2 min-w-0">
                       <MapPin size={14} weight="fill" className="text-[var(--color-accent)] shrink-0" />
-                      <span className="text-sm font-semibold text-zinc-800 truncate">{c.cidade}, {c.estado}</span>
+                      <span className="text-sm font-semibold text-zinc-800 truncate">
+                        {c.cidade}, {c.estado}
+                        {c.principal && <span className="ml-1.5 text-[9px] font-bold uppercase text-[var(--color-accent-dark)]">Sede</span>}
+                      </span>
                     </div>
                     <span className="text-xs font-bold text-zinc-400 shrink-0">{c.projetos}</span>
                   </div>
