@@ -297,7 +297,11 @@ export function LeadDetailModal({ leadId, onClose }: LeadDetailModalProps) {
                   {(Object.entries(interestConfig) as [Lead['interesse'] & string, typeof interestConfig.quente][]).map(([key, cfg]) => (
                     <button
                       key={key}
-                      onClick={() => setInteresse(interesse === key ? undefined : key as Lead['interesse'])}
+                      onClick={() => {
+                        const novoInteresse = interesse === key ? undefined : key as Lead['interesse'];
+                        setInteresse(novoInteresse);
+                        updateLead(lead.id, { interesse: novoInteresse });
+                      }}
                       className={`flex items-center gap-1.5 px-4 py-2 rounded-xl border-2 text-sm font-bold transition-all ${
                         interesse === key
                           ? cfg.color
